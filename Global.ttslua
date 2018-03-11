@@ -13,6 +13,26 @@ function onLoad(save)
 
 		"0dc414","ded49d","dc3aff","c42232","a506f9","423aeb",
     }
+    -- Hand_Sorter
+    Hand_Sorter = {"7c14e7","ff9b4f"}
+    ace = 15 -- Ace value
+    offset = {6,1,0}
+    for i,id in ipairs(Hand_Sorter) do
+        getObjectFromGUID(id).createButton({
+            label="Suits", click_function="StartSortS", function_owner=self,
+            position={-1.5,0.19,0}, rotation={0,0,0}, width=600, height=450, font_size=200
+        })
+        getObjectFromGUID(id).createButton({
+            label="Numbers", click_function="StartSortN", function_owner=self,
+            position={0,0.19,0}, rotation={0,0,0}, width=800, height=450, font_size=200
+        })
+
+        getObjectFromGUID(id).createButton({
+            label="Ace:H", click_function="AceToggle", function_owner=self,
+            position={1.5,0.19,0}, rotation={0,0,0}, width=600, height=450, font_size=200
+        })
+    end
+    -- Hand_Sorter end
 	Order = {
 		{color="White",Obj=getObjectFromGUID("0dc414")},
 		{color="Red",Obj=getObjectFromGUID("ded49d")},
@@ -29,7 +49,7 @@ function onLoad(save)
 		Index = 0
 		Turn = "Off"
 	end
-  lockObjects()
+    lockObjects()
 	UpdateDesplay()
 	Mods = {}
    normaldeckbagguids = {"7882de"}
@@ -45,6 +65,99 @@ function onLoad(save)
    GzoneCards = {}
    timerTick = 0
 end
+
+--Hand_Sorter functions
+function AceToggle()
+    if ace == 1 then
+        ace = 15
+        for i,id in ipairs(Hand_Sorter) do
+            getObjectFromGUID(id).editButton({index=2,label="Ace:H"})
+        end
+    else
+        ace = 1
+        for i,id in ipairs(Hand_Sorter) do
+            getObjectFromGUID(id).editButton({index=2,label="Ace:L"})
+        end
+    end
+end
+
+function SetAce(mode) --true = high
+    if mode == true then
+        ace = 15
+        for i,id in ipairs(Hand_Sorter) do
+            getObjectFromGUID(id).editButton({index=2,label="Ace:H"})
+        end
+    else
+        ace = 1
+        for i,id in ipairs(Hand_Sorter) do
+            getObjectFromGUID(id).editButton({index=2,label="Ace:L"})
+        end
+    end
+end
+
+function autoS(tbl)
+    StartSortS(self,tbl[1])
+end
+
+function autoN(tbl)
+    StartSortN(self,tbl[1])
+end
+
+function StartSortN(o,color)
+    function PassInfo()
+        Sort(color,true)
+        return 1
+    end
+    startLuaCoroutine(self,"PassInfo")
+end
+
+function StartSortS(o,color)
+    function PassInfo()
+        Sort(color,false)
+        return 1
+    end
+    startLuaCoroutine(self,"PassInfo")
+end
+
+function Sort(color,mode)
+    local hand = {}
+    local cards = Player[color].getHandObjects()
+    local rot = Player[color].getHandTransform(1).rotation
+    rot.y = rot.y + 180
+    for i, card in ipairs(cards) do
+        local Split = stringSplit(card.getDescription(), "%S+")
+        if mode == false then -- mode suit
+            if Split[1] == "A" then
+                local num = ace + (tonumber(Split[2])*100)
+                table.insert(hand,{num,card.guid})
+            else
+                local num = tonumber(Split[1]) + (tonumber(Split[2])*100)
+                table.insert(hand,{num,card.guid})
+            end
+        else --mode number
+            if Split[1] == "A" then
+                local num = (ace*100) + tonumber(Split[2])
+                table.insert(hand,{num,card.guid})
+            else
+                local num = (tonumber(Split[1])*100) + tonumber(Split[2])
+                table.insert(hand,{num,card.guid})
+            end
+        end
+    end
+    local keys = {}
+    for k in pairs(hand) do table.insert(keys, k) end
+    table.sort(keys, function(a, b) return hand[a][1] > hand[b][1] end)
+    local sorted = {}
+    for _, k in ipairs(keys) do table.insert(sorted, {hand[k][2]}) end
+
+    for i, id in ipairs(reverseTable(sorted)) do
+        local obj = getObjectFromGUID(id[1])
+        waitFrames(1)
+        obj.setRotation(rot)
+        obj.setPosition(rotateLocalCoordinates(offset,color))
+    end
+end
+--Hand_Sorter end
 
 function onPlayerChangedColor(col) --TEMPFUNCTION
    if col == "Grey" then
@@ -128,7 +241,6 @@ function SetTurn(tbl) -- tbl[1] = color
 			Index = i
 			Turn = set.color
 			UpdateDesplay()
-            return Turn
 		end
 	end
 end
@@ -142,7 +254,7 @@ function NextPlayer(tbl) --tbl[1] = true/false
 		Turn = Order[Index].color
 		if Player[Turn].seated == false then
 			NextPlayer(tbl)
-			return Turn
+			return
 		end
 		UpdateDesplay()
 	else
@@ -153,12 +265,11 @@ function NextPlayer(tbl) --tbl[1] = true/false
 		Turn = Order[Index].color
 		if Player[Turn].seated == false then
 			NextPlayer(tbl)
-			return Turn
+			return
 		end
 		UpdateDesplay()
 	end
 	broadcastToAll("It's " .. Player[Turn].steam_name .. " turn.",stringColorToRGB(Turn))
-    return Turn
 end
 
 function UpdateDesplay()
@@ -171,9 +282,38 @@ function UpdateDesplay()
 	end
 end
 
+--Tools
 function delayedCallback(fname,params,delay)
     timerTick = timerTick + 1
     params.id = ('timer_global' .. timerTick)
     Timer.create({identifier=params.id,function_owner=self, function_name=fname, parameters=params, delay=delay})
     return params.id
+end
+function stringSplit(s, pattern)
+    local t = {}
+    for i in string.gmatch(s, pattern) do
+        table.insert(t, i)
+    end
+    return t
+end
+function waitFrames(frames)
+    while frames > 0 do
+    coroutine.yield(0)
+    frames = frames - 1
+    end
+end
+function reverseTable(table)
+	local length = #table
+	local reverse = {}
+	for i, v in ipairs(table) do
+		reverse[length + 1 - i] = v
+	end
+	return reverse
+end
+function rotateLocalCoordinates(desiredPos,color)
+    local objPos, objRot = Player[color].getHandTransform().position, Player[color].getHandTransform().rotation
+    local angle = -math.rad(objRot.y)
+	local x = desiredPos[1] * math.cos(angle) - desiredPos[3] * math.sin(angle)
+	local z = desiredPos[1] * math.sin(angle) + desiredPos[3] * math.cos(angle)
+	return {objPos.x+x, objPos.y+desiredPos[2], objPos.z+z} --Baced on handzones
 end
