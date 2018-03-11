@@ -82,7 +82,7 @@ function AceToggle()
 end
 
 function SetAce(mode) --true = high
-    if mode == true then
+    if mode[1] == true then
         ace = 15
         for i,id in ipairs(Hand_Sorter) do
             getObjectFromGUID(id).editButton({index=2,label="Ace:H"})
