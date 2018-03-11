@@ -1,6 +1,5 @@
 function onLoad(save)
    placecardrightafterturn = true
-   handsorters = {"7c14e7","ff9b4f"}
    Global.call("RegisterMod",{self.guid})
    timerTick = 1
    poslist = {
@@ -71,14 +70,10 @@ function getTurn()
 end
 
 function Start()
-   for i,v in pairs(handsorters) do
-      local o = getObjectFromGUID(v)
-      o.setVar("ace", 1)
-      o.call("Ace")
-   end
-   lastcardinfo.name = "None"
-   lastcardinfo.numb = 0
-   startLuaCoroutine(self,"Start2")
+    Global.call("SetAce",{true})
+    lastcardinfo.name = "None"
+    lastcardinfo.numb = 0
+    startLuaCoroutine(self,"Start2")
 end
 
 function Start2()
@@ -141,6 +136,7 @@ function PickUp(o,color)
    local Deck = findDeck(WZone)
    if color == Turn then
       if Deck ~= false then
+         lastturncol = Turn
          Global.call("NextPlayer",{false})
          getTurn()
          local num = Deck.getQuantity()
@@ -154,7 +150,7 @@ function PickUp(o,color)
 end
 
 function forcesort1(info)
-   getObjectFromGUID("ff9b4f").call("forcesortn",{info[1]})
+   Global.call("autoN",{info[1]})
 end
 
 function onObjectEnterScriptingZone(Zone,Obj)
@@ -197,29 +193,30 @@ function onObjectEnterScriptingZone(Zone,Obj)
             startLuaCoroutine(self,"CheckDiscard")
          end
       elseif color == lastturncol and placecardrightafterturn == true then
-         local deck = findDeck(wzone)
+         local deck = findDeck(WZone)
          local dnumb = 0
          local cnumb = 0
          if deck.tag == "Card" then
             dnumb = tonumber(string.sub(deck.getDescription(),1,2))
          elseif deck.tag == "Deck" and checkcardssame(deck) then
-            dnumb = tonumber(string.sub(deck.getObjects()[1].getDescription(),1,2))
+            dnumb = tonumber(string.sub(deck.getObjects()[1].description,1,2))
          end
-         if obj.tag == "Card" then
-            cnumb = tonumber(string.sub(obj.getDescription(),1,2))
-         elseif obj.tag == "Deck" and checkcardssame(obj) then
-            cnumb = tonumber(string.sub(obj.getObjects()[1].getDescription(),1,2))
+         if Obj.tag == "Card" then
+            cnumb = tonumber(string.sub(Obj.getDescription(),1,2))
+         elseif Obj.tag == "Deck" and checkcardssame(obj) then
+            cnumb = tonumber(string.sub(Obj.getObjects()[1].description,1,2))
          end
          if cnumb == dnumb then
-            local pos = wzone.getPosition()
-            obj.setRotation(deck.getRotation())
-            obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+            local pos = WZone.getPosition()
+            Obj.setRotation(deck.getRotation())
+            Obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+            Obj.reload()
             --put code to set position right above deck here. Don't advance turn or lockout.
          else
-            if obj.tag == "Card" then
-               obj.deal(1, color)
-            elseif obj.tag == "Deck" then
-               obj.deal(obj.getQuantity(), color)
+            if Obj.tag == "Card" then
+               Obj.deal(1, color)
+            elseif Obj.tag == "Deck" then
+               Obj.deal(Obj.getQuantity(), color)
             end
          end
       else
@@ -249,10 +246,10 @@ function checkcardssame(checkdeck)
    if checkdeck.tag == "Card" then
       return false
    end
-   local checkobjs = checkdeck.getObjects
+   local checkobjs = checkdeck.getObjects()
    local checkcard = checkobjs[1]
    for i,v in pairs(checkobjs) do
-      if tonumber(string.sub(v,1,2)) ~= tonumber(string.sub(checkcard,1,2)) then
+      if tonumber(string.sub(v.description,1,2)) ~= tonumber(string.sub(checkcard.description,1,2)) then
          return false
       end
    end
@@ -317,6 +314,7 @@ function checkifcardgood(info)
 end
 
 function CheckDiscard()
+   getTurn()
    waitFrames(20)
    local Deck = findDeck(WZone)
    if Deck.getQuantity() == -1 then
@@ -331,6 +329,7 @@ function CheckDiscard()
          broadcastToAll("Go Again",stringColorToRGB("White"))
       elseif Deck.getName() == "Four" then
          broadcastToAll("Last Card: " .. lastcardinfo.name,stringColorToRGB("White"))
+         lastturncol = Turn
          Global.call("NextPlayer",{false})
          getTurn()
       else
@@ -340,6 +339,7 @@ function CheckDiscard()
             lastcardinfo.numb = tonumber(string.sub(Deck.getDescription(),1,2))
          end
          lastcardinfo.name = Deck.getName()
+         lastturncol = Turn
          Global.call("NextPlayer",{false})
          getTurn()
       end
@@ -361,6 +361,7 @@ function CheckDiscard()
          broadcastToAll("Go Again",stringColorToRGB("White"))
       elseif Cards[#Cards].nickname == "Four" then
          broadcastToAll("Last Card: " .. lastcardinfo.name,stringColorToRGB("White"))
+         lastturncol = Turn
          Global.call("NextPlayer",{false})
          getTurn()
       else
@@ -370,6 +371,7 @@ function CheckDiscard()
             lastcardinfo.numb = tonumber(string.sub(Cards[#Cards].description,1,2))
          end
          lastcardinfo.name = Cards[#Cards].nickname
+         lastturncol = Turn
          Global.call("NextPlayer",{false})
          getTurn()
       end
