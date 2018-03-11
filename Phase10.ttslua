@@ -261,7 +261,13 @@ function drawDeck(o,color)
 			pdeck.setPosition({pos.x,pos.y-3,pos.z})
 			pdeck.shuffle()
 			pdeck.deal(1,color)
+			if pdeck.tag == "Card" then
+				pdeck.interactable = true
+			end
 		else
+			if deck.tag == "Card" then
+				deck.interactable = true
+			end
 			deck.deal(1,color)
 		end
 		for i, id in ipairs(display) do
@@ -358,8 +364,8 @@ function onObjectEnterScriptingZone(Zone,Obj)
 			if count == -1 then count = 1 end
 			Obj.deal(count,color)
 		end
+		after(1,lockDecks)
 	end
-	after(1,lockDecks)
 end
 
 function Mstart()
