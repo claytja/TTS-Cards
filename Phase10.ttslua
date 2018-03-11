@@ -1,8 +1,14 @@
 function onLoad(save)
 	Global.call("RegisterMod",{self.guid})
     display = {"084f05","c3da13"}
+		RZone = getObjectFromGUID("11b50e")
+    GZone = getObjectFromGUID("c28f42")
+    WZone = getObjectFromGUID("d72560")
     lockout = false
     roundOne = true
+	delayedCallback("getTurn",{},0.5)
+	timerTick = 0
+	CardDrew = false
     Standard = {
         [1]="2 sets of 3",
         [2]="1 set of 3 and 1 run of 4",
@@ -32,12 +38,12 @@ function onLoad(save)
     if save == "" then
     Sets = {
         {color="Black",game=0,deck=""},
-        {color="White",phase=1,points=0,hex="7F7F7F"},
-        {color="Red",phase=1,points=0,hex="DA1917"},
-        {color="Yellow",phase=1,points=0,hex="E6E42B"},
-        {color="Green",phase=1,points=0,hex="30B22A"},
-        {color="Blue",phase=1,points=0,hex="1E87FF"},
-        {color="Pink",phase=1,points=0,hex="F46FCD"}
+        {color="White",phase=1,points=0,hex="7F7F7F",skips=0},
+        {color="Red",phase=1,points=0,hex="DA1917",skips=0},
+        {color="Yellow",phase=1,points=0,hex="E6E42B",skips=0},
+        {color="Green",phase=1,points=0,hex="30B22A",skips=0},
+        {color="Blue",phase=1,points=0,hex="1E87FF",skips=0},
+        {color="Pink",phase=1,points=0,hex="F46FCD",skips=0}
     }
     self.createButton({
 		label="Phase 10", click_function="Start", function_owner=self,
@@ -48,12 +54,12 @@ function onLoad(save)
         if Sets[1].game == 0 then
         Sets = {
             {color="Black",game=0,deck=""},
-            {color="White",phase=1,points=0,hex="7F7F7F"},
-            {color="Red",phase=1,points=0,hex="DA1917"},
-            {color="Yellow",phase=1,points=0,hex="E6E42B"},
-            {color="Green",phase=1,points=0,hex="30B22A"},
-            {color="Blue",phase=1,points=0,hex="1E87FF"},
-            {color="Pink",phase=1,points=0,hex="F46FCD"}
+            {color="White",phase=1,points=0,hex="7F7F7F",skips=0},
+            {color="Red",phase=1,points=0,hex="DA1917",skips=0},
+            {color="Yellow",phase=1,points=0,hex="E6E42B",skips=0},
+            {color="Green",phase=1,points=0,hex="30B22A",skips=0},
+            {color="Blue",phase=1,points=0,hex="1E87FF",skips=0},
+            {color="Pink",phase=1,points=0,hex="F46FCD",skips=0}
         }
         self.createButton({
             label="Phase 10", click_function="Start", function_owner=self,
@@ -74,8 +80,13 @@ function onLoad(save)
         end
     end
 end
+
 function onSave()
     return JSON.encode(Sets)
+end
+
+function getTurn()
+   Turn = Global.getVar("Turn")
 end
 
 function Start()
@@ -110,6 +121,11 @@ function Start()
     Display()
 end
 
+function PickRandomPlayer()
+	local players = getSeatedPlayers()
+	Turn = Global.call("SetTurn",{players[math.random(1,#players)]})
+end
+
 function SendReset()
 	Global.call("Reset",{})
 end
@@ -129,15 +145,17 @@ function Reset()
 	})
     Sets = {
         {color="Black",game=0,deck=""},
-        {color="White",phase=1,points=0,hex="7F7F7F"},
-        {color="Red",phase=1,points=0,hex="DA1917"},
-        {color="Yellow",phase=1,points=0,hex="E6E42B"},
-        {color="Green",phase=1,points=0,hex="30B22A"},
-        {color="Blue",phase=1,points=0,hex="1E87FF"},
-        {color="Pink",phase=1,points=0,hex="F46FCD"}
+        {color="White",phase=1,points=0,hex="7F7F7F",skips=0},
+        {color="Red",phase=1,points=0,hex="DA1917",skips=0},
+        {color="Yellow",phase=1,points=0,hex="E6E42B",skips=0},
+        {color="Green",phase=1,points=0,hex="30B22A",skips=0},
+        {color="Blue",phase=1,points=0,hex="1E87FF",skips=0},
+        {color="Pink",phase=1,points=0,hex="F46FCD",skips=0}
     }
     setNotes("")
     roundOne = true
+	CardDrew = false
+	Turn = Global.getVar("Turn")
 end
 
 function findDeck()
@@ -178,6 +196,25 @@ function getSet(color)
     return false
 end
 
+function onObjectEnterScriptingZone(Zone,Obj)
+	if Zone == WZone and Running == true then
+		local color = Obj.held_by_color
+		if color == nil then return
+		elseif color == Turn then
+			if CardDrew == true then
+
+			else
+				--you must draw a card befor you can discard
+			end
+		else
+			local count = Obj.getQuantity()
+			if count == -1 then count = 1 end
+				Obj.deal(count,color)
+			end
+		end
+	end
+end
+
 function Mstart()
     Sets[1].game=2
     Display()
@@ -191,6 +228,7 @@ function Mstart()
             position={0,0.19,0}, rotation={0,0,0}, width=800, height=500, font_size=200
         })
     end
+	PickRandomPlayer()
     NextRound()
 end
 
@@ -207,6 +245,7 @@ function Sstart()
             position={0,0.19,0}, rotation={0,0,0}, width=800, height=500, font_size=200
         })
     end
+	PickRandomPlayer()
     NextRound()
 end
 
@@ -280,4 +319,11 @@ function lockoutTimer(time)
 end
 function concludeLockout()
     lockout = false
+end
+
+function delayedCallback(func, table, time)
+   local params = table
+   params.id = 'Phase10_' ..timerTick
+   Timer.create({identifier=params.id, function_name=func, parameters=params, delay=time})
+   timerTick = timerTick + 1
 end
