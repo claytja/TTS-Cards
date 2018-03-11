@@ -197,50 +197,14 @@ function RegisterMod(tbl)
 	print("Registerd: " .. getObjectFromGUID(tbl[1]).getName())
 end
 
-function onObjectEnterScriptingZone(Zone, Object)
-    if Zone == Rzone then
-        if #RzoneCards == 0 then
-            delayedCallback("SendCards",{"Rzone"}, 0.5)
-        end
-        table.insert(RzoneCards,Object)
-    elseif Zone == Wzone then
-        if #WzoneCards == 0 then
-            delayedCallback("SendCards",{"Wzone"}, 0.5)
-        end
-        table.insert(WzoneCards,Object)
-    elseif Zone == Gzone then
-        if #GzoneCards == 0 then
-            delayedCallback("SendCards",{"Gzone"}, 0.5)
-        end
-        table.insert(GzoneCards,Object)
-    end
-end
-
-function SendCards(tbl)
-    if tbl[1] == "Rzone" then
-        for i, Obj in ipairs(Mods) do
-            Obj.call("onObjectEnterRedZone",RzoneCards)
-        end
-        RzoneCards = {}
-    elseif tbl[1] == "Wzone" then
-        for i, Obj in ipairs(Mods) do
-            Obj.call("onObjectEnterWhiteZone",WzoneCards)
-        end
-        WzoneCards = {}
-    elseif tbl[1] == "Gzone" then
-        for i, Obj in ipairs(Mods) do
-            Obj.call("onObjectEnterGreyZone",GzoneCards)
-        end
-        GzoneCards = {}
-    end
-end
-
+-- Turn system
 function SetTurn(tbl) -- tbl[1] = color
 	for i,set in ipairs(Order) do
 		if set.color == tbl[1] then
 			Index = i
 			Turn = set.color
 			UpdateDesplay()
+            return Turn
 		end
 	end
 end
@@ -270,6 +234,7 @@ function NextPlayer(tbl) --tbl[1] = true/false
 		UpdateDesplay()
 	end
 	broadcastToAll("It's " .. Player[Turn].steam_name .. " turn.",stringColorToRGB(Turn))
+    return Turn
 end
 
 function UpdateDesplay()
@@ -281,6 +246,7 @@ function UpdateDesplay()
 		end
 	end
 end
+--Turn system End
 
 --Tools
 function delayedCallback(fname,params,delay)

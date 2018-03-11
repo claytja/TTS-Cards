@@ -1,7 +1,7 @@
 function onLoad(save)
 	Global.call("RegisterMod",{self.guid})
     display = {"084f05","c3da13"}
-		RZone = getObjectFromGUID("11b50e")
+	RZone = getObjectFromGUID("11b50e")
     GZone = getObjectFromGUID("c28f42")
     WZone = getObjectFromGUID("d72560")
     lockout = false
