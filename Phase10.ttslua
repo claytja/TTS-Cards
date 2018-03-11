@@ -202,7 +202,11 @@ function onObjectEnterScriptingZone(Zone,Obj)
 		if color == nil then return
 		elseif color == Turn then
 			if CardDrew == true then
+				if Obj.getName() == "Skip" then
 
+				else
+
+				end
 			else
 				--you must draw a card befor you can discard
 			end
