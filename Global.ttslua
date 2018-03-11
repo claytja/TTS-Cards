@@ -29,7 +29,7 @@ function onLoad(save)
 		Index = 0
 		Turn = "Off"
 	end
-    lockObjects()
+  lockObjects()
 	UpdateDesplay()
 	Mods = {}
    normaldeckbagguids = {"7882de"}
@@ -128,6 +128,7 @@ function SetTurn(tbl) -- tbl[1] = color
 			Index = i
 			Turn = set.color
 			UpdateDesplay()
+            return Turn
 		end
 	end
 end
@@ -141,7 +142,7 @@ function NextPlayer(tbl) --tbl[1] = true/false
 		Turn = Order[Index].color
 		if Player[Turn].seated == false then
 			NextPlayer(tbl)
-			return
+			return Turn
 		end
 		UpdateDesplay()
 	else
@@ -152,11 +153,12 @@ function NextPlayer(tbl) --tbl[1] = true/false
 		Turn = Order[Index].color
 		if Player[Turn].seated == false then
 			NextPlayer(tbl)
-			return
+			return Turn
 		end
 		UpdateDesplay()
 	end
 	broadcastToAll("It's " .. Player[Turn].steam_name .. " turn.",stringColorToRGB(Turn))
+    return Turn
 end
 
 function UpdateDesplay()
