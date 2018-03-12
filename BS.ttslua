@@ -1,6 +1,5 @@
 function onLoad(save)
    cardnames = {"Ace","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Jack","Queen","King"}
-   handsorters = {"7c14e7","ff9b4f"}
    gamename = "BS"
    Global.call("RegisterMod",{self.guid})
    timerTick = 1
@@ -66,11 +65,7 @@ function start(obj,col)
    lastcards = {"A 1"}
    Running = true
    setNotes("On Card: " .. cardnames[oncard])
-   for i,v in pairs(handsorters) do
-      local o = getObjectFromGUID(v)
-      o.setVar("ace", 15)
-      o.call("Ace")
-   end
+   Global.call("SetAce",{true})
    startLuaCoroutine(self, "start2")
 end
 
@@ -114,7 +109,10 @@ function start2()
       end
    end
    waitFrames(70)
-   forcesort()
+   for i,v in pairs(getSeatedPlayers()) do
+      Global.call("autoN",{v})
+      waitFrames(1)
+   end
    return 1
 end
 
@@ -150,7 +148,7 @@ function checkbs2()
                end
                displaydone = true
                waitFrames(50)
-               getObjectFromGUID("ff9b4f").call("forcesortn",{lastturncol})
+               Global.call("autoN",{lastturncol})
                return 1
             end
          end
@@ -163,7 +161,7 @@ function checkbs2()
          end
          displaydone = true
          waitFrames(50)
-         getObjectFromGUID("ff9b4f").call("forcesortn",{col})
+         Global.call("autoN",{col})
       else
          if tonumber(string.sub(lastcards[1],1,2)) ~= compcard then
             local dispcards = displaycards({deck,#lastcards})
@@ -173,7 +171,7 @@ function checkbs2()
             deck.deal(1,lastturncol)
             displaydone = true
             waitFrames(50)
-            getObjectFromGUID("ff9b4f").call("forcesortn",{lastturncol})
+            Global.call("autoN",{lastturncol})
             return 1
          end
          local dispcards = displaycards({deck,#lastcards})
@@ -183,7 +181,7 @@ function checkbs2()
          deck.deal(1,col)
          displaydone = true
          waitFrames(50)
-         getObjectFromGUID("ff9b4f").call("forcesortn",{col})
+         Global.call("autoN",{col})
       end
    end
    return 1
@@ -323,14 +321,6 @@ function waitforcards()
       oncard = oncard+1
    end
    setNotes("On Card: " .. cardnames[oncard])
-   return 1
-end
-
-function forcesort()
-   for i,v in pairs(getSeatedPlayers()) do
-      getObjectFromGUID("ff9b4f").call("forcesortn",{v})
-      waitFrames(1)
-   end
    return 1
 end
 
