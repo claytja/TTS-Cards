@@ -52,7 +52,7 @@ function onLoad(save)
     lockObjects()
 	UpdateDesplay()
 	Mods = {}
-   normaldeckbagguids = {"7882de"}
+   normaldeckbagguids = {"7882de"} --all infinite bags that hold default decks. Need to be labeled the same as portal deck.
    normaldeckbags = {}
    for i,v in pairs(normaldeckbagguids) do
       table.insert(normaldeckbags,getObjectFromGUID(v))

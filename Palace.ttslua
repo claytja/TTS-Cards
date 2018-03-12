@@ -149,7 +149,7 @@ function PickUp(o,color)
 end
 
 function forcesort1(info)
-   getObjectFromGUID("ff9b4f").call("forcesortn",{info[1]})
+   Global.call("autoN",{info[1]})
 end
 
 function onObjectEnterScriptingZone(Zone,Obj)
@@ -191,32 +191,6 @@ function onObjectEnterScriptingZone(Zone,Obj)
             lockout = true
             startLuaCoroutine(self,"CheckDiscard")
          end
-      elseif color == lastturncol and placecardrightafterturn == true then
-         local deck = findDeck(wzone)
-         local dnumb = 0
-         local cnumb = 0
-         if deck.tag == "Card" then
-            dnumb = tonumber(string.sub(deck.getDescription(),1,2))
-         elseif deck.tag == "Deck" and checkcardssame(deck) then
-            dnumb = tonumber(string.sub(deck.getObjects()[1].getDescription(),1,2))
-         end
-         if obj.tag == "Card" then
-            cnumb = tonumber(string.sub(obj.getDescription(),1,2))
-         elseif obj.tag == "Deck" and checkcardssame(obj) then
-            cnumb = tonumber(string.sub(obj.getObjects()[1].getDescription(),1,2))
-         end
-         if cnumb == dnumb then
-            local pos = wzone.getPosition()
-            obj.setRotation(deck.getRotation())
-            obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
-            --put code to set position right above deck here. Don't advance turn or lockout.
-         else
-            if obj.tag == "Card" then
-               obj.deal(1, color)
-            elseif obj.tag == "Deck" then
-               obj.deal(obj.getQuantity(), color)
-            end
-         end
       else
          local count = Obj.getQuantity()
          if count == -1 then count = 1 end
@@ -227,31 +201,6 @@ function onObjectEnterScriptingZone(Zone,Obj)
          delayedCallback("DealCards",{color},0.5)
       end
    end
-end
-
-function onObjectEnterRedZone()
-
-end
-function onObjectEnterGreyZone()
-
-end
-function onObjectEnterWhiteZone()
-
-end
-
-
-function checkcardssame(checkdeck)
-   if checkdeck.tag == "Card" then
-      return false
-   end
-   local checkobjs = checkdeck.getObjects
-   local checkcard = checkobjs[1]
-   for i,v in pairs(checkobjs) do
-      if tonumber(string.sub(v,1,2)) ~= tonumber(string.sub(checkcard,1,2)) then
-         return false
-      end
-   end
-   return true
 end
 
 function checkifcardgood(info)
@@ -312,6 +261,7 @@ function checkifcardgood(info)
 end
 
 function CheckDiscard()
+   getTurn()
    waitFrames(20)
    local Deck = findDeck(WZone)
    if Deck.getQuantity() == -1 then
