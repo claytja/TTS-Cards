@@ -1,121 +1,78 @@
+function SendReset()
+   Global.call("Reset",{})
+end
+function onSave()
+   return JSON.encode(Sets)
+end
+BaceTable = {
+    {color="Black",Running=false},
+    {color="White",hex="7F7F7F",UI="0dc414"},
+    {color="Red",hex="DA1917",UI="ded49d"},
+    {color="Yellow",hex="E6E42B",UI="dc3aff"},
+    {color="Green",hex="30B22A",UI="c42232"},
+    {color="Blue",hex="1E87FF",UI="a506f9"},
+    {color="Pink",hex="F46FCD",UI="423aeb"}
+}
 function onload(save)
-   handsorters = {"7c14e7","ff9b4f"}
-   gamename = "BS"
+    --Setup
    Global.call("RegisterMod",{self.guid})
-   timerTick = 1
-   poslist = {
-      {0,0,4.65},
-      {-2.1,0,4.65},
-      {2.1,0,4.65},
-   }
    if save ~= "" then
-      Running = false
+       Sets = BaceTable
       self.createButton({
          label=gamename, click_function="start", function_owner=self,
          position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
       })
    else
-      local tbl = JSON.decode(save) or {}
-      Running = tbl[1] or false
-      if Running == false then
-         self.clearButtons()
+      Sets = JSON.decode(save) or BaceTable
+      if Sets[1].Running == false then
          self.createButton({
             label=gamename, click_function="start", function_owner=self,
             position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
          })
       else
-         self.clearButtons()
          self.createButton({
             label="Reset", click_function="SendReset", function_owner=self,
             position={0,0.19,0}, rotation={0,0,0}, width=600, height=450, font_size=150
          })
       end
    end
+   --Vars
+   timerTick = 1
    display = {getObjectFromGUID("084f05"),getObjectFromGUID("c3da13")}
-   rzone = getObjectFromGUID("11b50e")
-   gzone = getObjectFromGUID("c28f42")
-   wzone = getObjectFromGUID("d72560")
-   getturn()
-end
-
-function onSave()
-   local tbl = {Running}
-   return JSON.encode(tbl)
+   RZone = getObjectFromGUID("11b50e")
+   GZone = getObjectFromGUID("c28f42")
+   WZone = getObjectFromGUID("d72560")
+   Turn = Global.getVar("Turn")
 end
 
 function Reset()
    Running = false
    self.clearButtons()
    self.createButton({
-      label=gamename, click_function="start", function_owner=self,
+      label=self.getName(), click_function="start", function_owner=self,
       position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
    })
    turn = Global.getVar("Turn")
 end
+--Main Code
 
-function SendReset()
-   Global.call("Reset",{})
+function onObjectEnterScriptingZone(Zone,Obj)
+	if Zone == WZone and Sets[1].Running == true then
+		local color = Obj.held_by_color
+		if color == nil then
+			return
+        elseif color == Turn then
+
+        else --if color ~= Turn
+			local count = Obj.getQuantity()
+			if count == -1 then count = 1 end
+			Obj.deal(count,color)
+        end
+    end
 end
 
-function onObjectEnterGreyZone(cards) --cards is a table
 
-end
-
-function onObjectEnterWhiteZone(cards) --cards is a table
-
-end
-
-function onObjectEnterRedZone(cards) --cards is a table
-
-end
-
-function forcesortall()
-   for i,v in pairs(getSeatedPlayers()) do
-      getObjectFromGUID("ff9b4f").call("forcesortn",{v})
-      waitFrames(1)
-   end
-   return 1
-end
-
-function waitFrames(frames)
-   while frames > 0 do
-      coroutine.yield(0)
-      frames = frames - 1
-   end
-end
-
-function getrandomdeck(info) --for use in start code
-   local pos = info.pos
-   local numb = info.numb
-   local normaldeckbags = Global.getTable("normaldeckbags")
-   local deck
-   for i=1,numb do
-      deck = normaldeckbags[math.random(1,#normaldeckbags)].takeObject({
-         position       = {pos.x,pos.y+i,pos.z},
-         rotation       = {0,0,180},
-         smooth         = false,
-      })
-   end
-   waitFrames(200)
-   if deck ~= nil then
-      return deck
-   else
-      local cast = Physics.cast({
-         origin       = {pos.x,pos.y-3,pos.z},
-         direction    = {0,1,0},
-         type         = 2,
-         size = {2,2,2},
-         max_distance = 10,
-      }) -- returns {{Vector point, Vector normal, float distance, Object hit_object}, ...}
-      for i,v in pairs(cast) do
-         if v.hit_object.tag == "Deck" then
-            return v.hit_object
-         end
-      end
-   end
-   return 1
-end
-
+--Tools
 function findDeck(zone)
    if zone.getObjects() then
       for i, obj in ipairs(zone.getObjects()) do
@@ -131,7 +88,41 @@ function findDeck(zone)
    end
    return false
 end
-
-function getturn()
-   turn = Global.getVar("Turn")
+function delayedCallback(fname,params,delay)
+    timerTick = timerTick + 1
+    params.id = (self.getName() .. timerTick)
+    Timer.create({identifier=params.id,function_owner=self, function_name=fname, parameters=params, delay=delay})
+    return params.id
+end
+function stringSplit(s, pattern)
+    local t = {}
+    for i in string.gmatch(s, pattern) do
+        table.insert(t, i)
+    end
+    return t
+end
+function waitFrames(frames)
+    while frames > 0 do
+    coroutine.yield(0)
+    frames = frames - 1
+    end
+end
+function reverseTable(table)
+	local length = #table
+	local reverse = {}
+	for i, v in ipairs(table) do
+		reverse[length + 1 - i] = v
+	end
+	return reverse
+end
+function rotateLocalCoordinates(desiredPos,color)
+    local objPos, objRot = Player[color].getHandTransform().position, Player[color].getHandTransform().rotation
+    local angle = -math.rad(objRot.y)
+	local x = desiredPos[1] * math.cos(angle) - desiredPos[3] * math.sin(angle)
+	local z = desiredPos[1] * math.sin(angle) + desiredPos[3] * math.cos(angle)
+	return {objPos.x+x, objPos.y+desiredPos[2], objPos.z+z} --Baced on handzones
+end
+function PickRandomPlayer()
+	local players = getSeatedPlayers()
+	Turn = Global.call("SetTurn",{players[math.random(1,#players)]})
 end
