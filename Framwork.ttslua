@@ -5,19 +5,19 @@ function onSave()
    return JSON.encode(Sets)
 end
 BaceTable = {
-    {color="Black",Running=false},
-    {color="White",hex="7F7F7F",UI="0dc414"},
-    {color="Red",hex="DA1917",UI="ded49d"},
-    {color="Yellow",hex="E6E42B",UI="dc3aff"},
-    {color="Green",hex="30B22A",UI="c42232"},
-    {color="Blue",hex="1E87FF",UI="a506f9"},
-    {color="Pink",hex="F46FCD",UI="423aeb"}
+   {color="Black",Running=false},
+   {color="White",hex="7F7F7F",UI="0dc414"},
+   {color="Red",hex="DA1917",UI="ded49d"},
+   {color="Yellow",hex="E6E42B",UI="dc3aff"},
+   {color="Green",hex="30B22A",UI="c42232"},
+   {color="Blue",hex="1E87FF",UI="a506f9"},
+   {color="Pink",hex="F46FCD",UI="423aeb"}
 }
 function onload(save)
-    --Setup
+   --Setup
    Global.call("RegisterMod",{self.guid})
    if save ~= "" then
-       Sets = BaceTable
+      Sets = BaceTable
       self.createButton({
          label=gamename, click_function="start", function_owner=self,
          position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
@@ -57,21 +57,31 @@ end
 --Main Code
 
 function onObjectEnterScriptingZone(Zone,Obj)
-	if Zone == WZone and Sets[1].Running == true then
-		local color = Obj.held_by_color
-		if color == nil then
-			return
-        elseif color == Turn then
-
-        else --if color ~= Turn
-			local count = Obj.getQuantity()
-			if count == -1 then count = 1 end
-			Obj.deal(count,color)
-        end
-    end
+   if Zone == WZone and Sets[1].Running == true then
+      local color = Obj.held_by_color --get player color who is attempting to play
+      if color == nil then
+         return
+      elseif color == Turn then --if player plays card, and it is their turn.
+         putCardInstant(Obj,WZone,{0,180,0})
+      elseif color ~= Turn then --if player plays out of turn.
+         local count = Obj.getQuantity()
+         if count == -1 then count = 1 end
+         Obj.deal(count,color)
+      end
+   end
 end
 
-
+function putCardInstant(obj,zone,rot) --checks if deck exsists and puts it ontop of deck, otherwise sets it to a constant y vale.
+   local pos = zone.getPosition()
+   local deck = findDeck(zone)
+   if deck then
+      obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+   else
+      obj.setPosition({pos.x,1.03,pos.z})
+   end
+   obj.setRotation(rot)
+   obj.reload() --force player to drop card
+end
 --Tools
 function findDeck(zone)
    if zone.getObjects() then
@@ -89,40 +99,40 @@ function findDeck(zone)
    return false
 end
 function delayedCallback(fname,params,delay)
-    timerTick = timerTick + 1
-    params.id = (self.getName() .. timerTick)
-    Timer.create({identifier=params.id,function_owner=self, function_name=fname, parameters=params, delay=delay})
-    return params.id
+   timerTick = timerTick + 1
+   params.id = (self.getName() .. timerTick)
+   Timer.create({identifier=params.id,function_owner=self, function_name=fname, parameters=params, delay=delay})
+   return params.id
 end
 function stringSplit(s, pattern)
-    local t = {}
-    for i in string.gmatch(s, pattern) do
-        table.insert(t, i)
-    end
-    return t
+   local t = {}
+   for i in string.gmatch(s, pattern) do
+      table.insert(t, i)
+   end
+   return t
 end
 function waitFrames(frames)
-    while frames > 0 do
-    coroutine.yield(0)
-    frames = frames - 1
-    end
+   while frames > 0 do
+      coroutine.yield(0)
+      frames = frames - 1
+   end
 end
 function reverseTable(table)
-	local length = #table
-	local reverse = {}
-	for i, v in ipairs(table) do
-		reverse[length + 1 - i] = v
-	end
-	return reverse
+   local length = #table
+   local reverse = {}
+   for i, v in ipairs(table) do
+      reverse[length + 1 - i] = v
+   end
+   return reverse
 end
 function rotateLocalCoordinates(desiredPos,color)
-    local objPos, objRot = Player[color].getHandTransform().position, Player[color].getHandTransform().rotation
-    local angle = -math.rad(objRot.y)
-	local x = desiredPos[1] * math.cos(angle) - desiredPos[3] * math.sin(angle)
-	local z = desiredPos[1] * math.sin(angle) + desiredPos[3] * math.cos(angle)
-	return {objPos.x+x, objPos.y+desiredPos[2], objPos.z+z} --Baced on handzones
+   local objPos, objRot = Player[color].getHandTransform().position, Player[color].getHandTransform().rotation
+   local angle = -math.rad(objRot.y)
+   local x = desiredPos[1] * math.cos(angle) - desiredPos[3] * math.sin(angle)
+   local z = desiredPos[1] * math.sin(angle) + desiredPos[3] * math.cos(angle)
+   return {objPos.x+x, objPos.y+desiredPos[2], objPos.z+z} --Baced on handzones
 end
 function PickRandomPlayer()
-	local players = getSeatedPlayers()
-	Turn = Global.call("SetTurn",{players[math.random(1,#players)]})
+   local players = getSeatedPlayers()
+   Turn = Global.call("SetTurn",{players[math.random(1,#players)]})
 end
