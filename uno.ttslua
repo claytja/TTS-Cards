@@ -1,0 +1,4 @@
+function onLoad(save)
+	Global.call("RegisterMod",{self.guid})
+
+end

@@ -1,6 +1,5 @@
 function onLoad(save)
    placecardrightafterturn = true
-   handsorters = {"7c14e7","ff9b4f"}
    Global.call("RegisterMod",{self.guid})
    timerTick = 1
    poslist = {
@@ -71,14 +70,10 @@ function getTurn()
 end
 
 function Start()
-   for i,v in pairs(handsorters) do
-      local o = getObjectFromGUID(v)
-      o.setVar("ace", 1)
-      o.call("Ace")
-   end
-   lastcardinfo.name = "None"
-   lastcardinfo.numb = 0
-   startLuaCoroutine(self,"Start2")
+    Global.call("SetAce",{true})
+    lastcardinfo.name = "None"
+    lastcardinfo.numb = 0
+    startLuaCoroutine(self,"Start2")
 end
 
 function Start2()

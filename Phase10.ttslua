@@ -1,8 +1,13 @@
 function onLoad(save)
 	Global.call("RegisterMod",{self.guid})
     display = {"084f05","c3da13"}
+	RZone = getObjectFromGUID("11b50e")
+    GZone = getObjectFromGUID("c28f42")
+    WZone = getObjectFromGUID("d72560")
     lockout = false
     roundOne = true
+	skipPick = false
+	timerTick = 0
     Standard = {
         [1]="2 sets of 3",
         [2]="1 set of 3 and 1 run of 4",
@@ -31,13 +36,13 @@ function onLoad(save)
     }
     if save == "" then
     Sets = {
-        {color="Black",game=0,deck=""},
-        {color="White",phase=1,points=0,hex="7F7F7F"},
-        {color="Red",phase=1,points=0,hex="DA1917"},
-        {color="Yellow",phase=1,points=0,hex="E6E42B"},
-        {color="Green",phase=1,points=0,hex="30B22A"},
-        {color="Blue",phase=1,points=0,hex="1E87FF"},
-        {color="Pink",phase=1,points=0,hex="F46FCD"}
+        {color="Black",game=0,deck="",CardDrew=false,Running=false},
+        {color="White",phase=1,points=0,hex="7F7F7F",skips=0,UI="0dc414"},
+        {color="Red",phase=1,points=0,hex="DA1917",skips=0,UI="ded49d"},
+        {color="Yellow",phase=1,points=0,hex="E6E42B",skips=0,UI="dc3aff"},
+        {color="Green",phase=1,points=0,hex="30B22A",skips=0,UI="c42232"},
+        {color="Blue",phase=1,points=0,hex="1E87FF",skips=0,UI="a506f9"},
+        {color="Pink",phase=1,points=0,hex="F46FCD",skips=0,UI="423aeb"}
     }
     self.createButton({
 		label="Phase 10", click_function="Start", function_owner=self,
@@ -47,38 +52,49 @@ function onLoad(save)
         Sets = JSON.decode(save)
         if Sets[1].game == 0 then
         Sets = {
-            {color="Black",game=0,deck=""},
-            {color="White",phase=1,points=0,hex="7F7F7F"},
-            {color="Red",phase=1,points=0,hex="DA1917"},
-            {color="Yellow",phase=1,points=0,hex="E6E42B"},
-            {color="Green",phase=1,points=0,hex="30B22A"},
-            {color="Blue",phase=1,points=0,hex="1E87FF"},
-            {color="Pink",phase=1,points=0,hex="F46FCD"}
+            {color="Black",game=0,deck="",CardDrew=false,Running=false},
+            {color="White",phase=1,points=0,hex="7F7F7F",skips=0,UI="0dc414"},
+            {color="Red",phase=1,points=0,hex="DA1917",skips=0,UI="ded49d"},
+            {color="Yellow",phase=1,points=0,hex="E6E42B",skips=0,UI="dc3aff"},
+            {color="Green",phase=1,points=0,hex="30B22A",skips=0,UI="c42232"},
+            {color="Blue",phase=1,points=0,hex="1E87FF",skips=0,UI="a506f9"},
+            {color="Pink",phase=1,points=0,hex="F46FCD",skips=0,UI="423aeb"}
         }
         self.createButton({
             label="Phase 10", click_function="Start", function_owner=self,
             position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
         })
-        elseif Sets[1].game == 1 then
-            Sstart()
-            self.createButton({
-                label="Reset", click_function="Reset", function_owner=self,
-                position={0,0.19,0}, rotation={0,0,0}, width=600, height=450, font_size=150
-            })
         else
-            Mstart()
+			Display()
+		    for i, id in ipairs(display) do
+		        local obj = getObjectFromGUID(id)
+		        obj.clearButtons()
+		    end
+			if Sets[1].CardDrew == false then
+				getObjectFromGUID(display[1]).createButton({
+					 label="Draw Deck", click_function="drawDeck", function_owner=self, color=stringColorToRGB("Orange"),
+					 position={0,0.19,0}, rotation={0,0,0}, width=1600, height=450, font_size=150
+				})
+				getObjectFromGUID(display[2]).createButton({
+					 label="Draw Discard", click_function="drawDiscard", function_owner=self, color=stringColorToRGB("Teal"),
+					 position={0,0.19,0}, rotation={0,0,0}, width=1600, height=450, font_size=150
+				})
+			end
             self.createButton({
                 label="Reset", click_function="Reset", function_owner=self,
                 position={0,0.19,0}, rotation={0,0,0}, width=600, height=450, font_size=150
             })
+			Turn = Global.getVar("Turn")
         end
     end
 end
+
 function onSave()
     return JSON.encode(Sets)
 end
 
 function Start()
+	Sets[1].Running = true
     for i,obj in ipairs(getAllObjects()) do
         if obj.tag == "Card" or obj.tag == "Deck" then
             obj.destruct()
@@ -106,8 +122,14 @@ function Start()
     local pos = getObjectFromGUID("c28f42").getPosition()
     local rot = getObjectFromGUID("c28f42").getRotation()
     local deck = getObjectFromGUID("2eb2f0").takeObject({position=pos,rotation={rot.x,rot.y,180}})
+	 deck.interactable = false
     deck.shuffle()
     Display()
+end
+
+function PickRandomPlayer()
+	local players = getSeatedPlayers()
+	Turn = Global.call("SetTurn",{players[math.random(1,#players)]})
 end
 
 function SendReset()
@@ -128,19 +150,20 @@ function Reset()
 		position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
 	})
     Sets = {
-        {color="Black",game=0,deck=""},
-        {color="White",phase=1,points=0,hex="7F7F7F"},
-        {color="Red",phase=1,points=0,hex="DA1917"},
-        {color="Yellow",phase=1,points=0,hex="E6E42B"},
-        {color="Green",phase=1,points=0,hex="30B22A"},
-        {color="Blue",phase=1,points=0,hex="1E87FF"},
-        {color="Pink",phase=1,points=0,hex="F46FCD"}
+        {color="Black",game=0,deck="",CardDrew=false,Running=false},
+        {color="White",phase=1,points=0,hex="7F7F7F",skips=0,UI="0dc414"},
+        {color="Red",phase=1,points=0,hex="DA1917",skips=0,UI="ded49d"},
+        {color="Yellow",phase=1,points=0,hex="E6E42B",skips=0,UI="dc3aff"},
+        {color="Green",phase=1,points=0,hex="30B22A",skips=0,UI="c42232"},
+        {color="Blue",phase=1,points=0,hex="1E87FF",skips=0,UI="a506f9"},
+        {color="Pink",phase=1,points=0,hex="F46FCD",skips=0,UI="423aeb"}
     }
     setNotes("")
     roundOne = true
+	Turn = Global.getVar("Turn")
 end
 
-function findDeck()
+function findDeck1()
     for i, obj in ipairs(getObjectFromGUID("c28f42").getObjects()) do
         if obj.tag == "Deck" then
             return obj
@@ -178,35 +201,192 @@ function getSet(color)
     return false
 end
 
+function selectSkip(obj,col)
+	if col == Turn then
+		for i,v in pairs(Sets) do
+			if v.UI == obj.getGUID() then --v.UI is guid of
+				Sets[i].skips = v.skips + 1
+				break
+			end
+		end
+	end
+	for i,v in pairs(Sets) do
+		if v.UI then
+			getObjectFromGUID(v.UI).clearButtons()
+		end
+	end
+	skipPick = false
+	nextPlayer()
+end
+
+function nextPlayer()
+	if #Player[Turn].getHandObjects(1) == 0 then
+		NextRound()
+		return
+	end
+	Turn = Global.call("NextPlayer",{false}) --no reversing in phase10, parameters always false
+	for i,v in pairs(Sets) do
+		if v.color == Turn and v.skips > 0 then --if player has skips, recall nextPlayer function
+			Sets[i].skips = v.skips - 1
+			nextPlayer()
+			return
+		end
+	end
+	--create draw from deck and discard buttons
+	for i, id in ipairs(display) do
+		getObjectFromGUID(id).clearButtons()
+	end
+	getObjectFromGUID(display[1]).createButton({
+		 label="Draw Deck", click_function="drawDeck", function_owner=self, color=stringColorToRGB("Orange"),
+		 position={0,0.19,0}, rotation={0,0,0}, width=1600, height=450, font_size=150
+	})
+	getObjectFromGUID(display[2]).createButton({
+		 label="Draw Discard", click_function="drawDiscard", function_owner=self, color=stringColorToRGB("Teal"),
+		 position={0,0.19,0}, rotation={0,0,0}, width=1600, height=450, font_size=150
+	})
+	Sets[1].CardDrew = false
+end
+
+function drawDeck(o,color)
+	if color == Turn then
+		local deck = findDeck(GZone)
+		if deck == false then
+			local pdeck = findDeck(WZone)
+			pdeck.takeObject({
+				position = WZone.getPosition(),
+				top            = false,
+			})
+			pdeck.setRotation({0,0,180})
+			local pos = GZone.getPosition()
+			pdeck.setPosition({pos.x,pos.y-3,pos.z})
+			pdeck.shuffle()
+			pdeck.deal(1,color)
+			if pdeck.tag == "Card" then
+				pdeck.interactable = true
+			end
+		else
+			if deck.tag == "Card" then
+				deck.interactable = true
+			end
+			deck.deal(1,color)
+		end
+		for i, id in ipairs(display) do
+			getObjectFromGUID(id).clearButtons()
+		end
+		Sets[1].CardDrew = true
+	end
+end
+
+function drawDiscard(o,color)
+	local deck = findDeck(WZone)
+	local topcard
+	if deck.tag == "Deck" then
+		topcard = deck.getObjects()[deck.getQuantity()].nickname
+	elseif deck.tag == "Card" then
+		topcard = deck.getName()
+	end
+	if color == Turn and topcard ~= "Skip" then
+		local deck = findDeck(WZone)
+		if deck == false then return log("No Discard Deck in White", "error", "Error: ") end
+		deck.deal(1,color)
+		for i, id in ipairs(display) do
+			getObjectFromGUID(id).clearButtons()
+		end
+		Sets[1].CardDrew = true
+	end
+end
+
+function lockDecks()
+	if findDeck(WZone) then
+		local deck = findDeck(WZone)
+		deck.interactable = false
+	end
+	if findDeck(GZone) then
+		local deck = findDeck(GZone)
+		deck.interactable = false
+	end
+end
+
+function onObjectEnterScriptingZone(Zone,Obj)
+	if Zone == WZone and Sets[1].Running == true then
+		local color = Obj.held_by_color
+		if color == nil then
+			return
+		elseif color == Turn and Obj.tag == "Card" and skipPick == false then
+			if Sets[1].CardDrew == true then
+				if Obj.getName() == "Skip" then --if play skip card
+					for i,v in pairs(Sets) do
+						if Player[v.color].seated == true then
+							if v.UI ~= nil then
+								skipPick = true
+								getObjectFromGUID(v.UI).createButton({
+									click_function = "selectSkip",
+									function_owner = self,
+									label          = "Skip",
+									position       = {0,0.1,0},
+									width          = 600,
+									height         = 450,
+									font_size      = 200,
+								})
+							end
+						end
+					end
+					local pos = WZone.getPosition()
+					if findDeck(WZone) then
+						local deck = findDeck(WZone)
+						Obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+					else
+						Obj.setPosition({pos.x,1.03,pos.z})
+					end
+					Obj.setRotation({0,180,0})
+					Obj.reload()
+				else --if not play skip card
+					local pos = WZone.getPosition()
+					if findDeck(WZone) then
+						local deck = findDeck(WZone)
+						Obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+					else
+						Obj.setPosition({pos.x,1.03,pos.z})
+					end
+					Obj.setRotation({0,180,0})
+					Obj.reload()
+					nextPlayer()
+				end
+			else
+				--you must draw a card befor you can discard
+				local count = Obj.getQuantity()
+				if count == -1 then count = 1 end
+				Obj.deal(count,color)
+				broadcastToColor("You cannot discard a card\nbefore drawing a card", color, {1,0,0})
+			end
+		else --if color ~= Turn
+			local count = Obj.getQuantity()
+			if count == -1 then count = 1 end
+			Obj.deal(count,color)
+		end
+		after(1,lockDecks)
+	end
+end
+
 function Mstart()
     Sets[1].game=2
     Display()
-    getObjectFromGUID(display[1]).clearButtons()
-    getObjectFromGUID(display[2]).clearButtons()
     for i, id in ipairs(display) do
         local obj = getObjectFromGUID(id)
         obj.clearButtons()
-        obj.createButton({
-            label="Round", click_function="NextRound", function_owner=self, color=stringColorToRGB("Red"),
-            position={0,0.19,0}, rotation={0,0,0}, width=800, height=500, font_size=200
-        })
     end
+	PickRandomPlayer()
     NextRound()
 end
 
 function Sstart()
     Sets[1].game=1
     Display()
-    getObjectFromGUID(display[1]).clearButtons()
-    getObjectFromGUID(display[2]).clearButtons()
     for i, id in ipairs(display) do
         local obj = getObjectFromGUID(id)
         obj.clearButtons()
-        obj.createButton({
-            label="Round", click_function="NextRound", function_owner=self, color=stringColorToRGB("Red"),
-            position={0,0.19,0}, rotation={0,0,0}, width=800, height=500, font_size=200
-        })
     end
+	PickRandomPlayer()
     NextRound()
 end
 
@@ -216,6 +396,7 @@ end
 function NextRoundGo()
     if lockout == false then
         lockoutTimer(5)
+		waitFrames(15)
         for i, player in ipairs(getSeatedPlayers()) do
             local set = getSet(player)
             local hand = Player[player].getHandObjects(1)
@@ -235,7 +416,7 @@ function NextRoundGo()
             end
         end
         roundOne = false
-        local Deck = findDeck()
+        local Deck = findDeck1()
         for i,obj in ipairs(getAllObjects()) do
             if obj ~= Deck then
                 if obj.tag == "Card" or obj.tag == "Deck" then
@@ -260,24 +441,76 @@ function NextRoundGo()
         Display()
         waitFrames(60)
         for i, player in ipairs(getSeatedPlayers()) do
-            getObjectFromGUID("7c14e7").call("autoN",{player})
+            Global.call("autoN",{player})
             waitFrames(1)
         end
 
     end
+	--reset Skips
+	 for i,v in pairs(Sets) do
+		if v.skips then
+			Sets[i].skips = 0
+		end
+	 end
+	 --Skip player if card is Skip
+	local cards = findDeck(WZone)
+	if cards ~= false and cards.getName() == "Skip" then
+		nextPlayer()
+	end
+	--make buttons
+	 for i, id in ipairs(display) do
+ 		 getObjectFromGUID(id).clearButtons()
+ 	 end
+	 getObjectFromGUID(display[1]).createButton({
+ 		 label="Draw Deck", click_function="drawDeck", function_owner=self, color=stringColorToRGB("Orange"),
+ 		 position={0,0.19,0}, rotation={0,0,0}, width=1600, height=450, font_size=150
+ 	})
+ 	getObjectFromGUID(display[2]).createButton({
+ 		 label="Draw Discard", click_function="drawDiscard", function_owner=self, color=stringColorToRGB("Teal"),
+ 		 position={0,0.19,0}, rotation={0,0,0}, width=1600, height=450, font_size=150
+ 	})
+	 Sets[1].CardDrew = false
     return 1
 end
+
+function findDeck(zone)
+   for i, obj in ipairs(zone.getObjects()) do
+      if obj.tag == "Deck" then
+         return obj
+      end
+   end
+   for i, obj in ipairs(zone.getObjects()) do
+      if obj.tag == "Card" then
+         return obj
+      end
+   end
+   return false
+end
+
 function waitFrames(frames)
     while frames > 0 do
     coroutine.yield(0)
     frames = frames - 1
     end
 end
-function lockoutTimer(time)
+
+function lockoutTimer(tim)
     lockout = true
     Timer.destroy(self.getGUID())
-    Timer.create({identifier=self.getGUID(), function_name='concludeLockout', delay=time})
+    Timer.create({identifier=self.getGUID(), function_name='concludeLockout', delay=tim})
 end
+
 function concludeLockout()
     lockout = false
+end
+
+function after(delay, func, ...)
+    local params = {...}
+    function after_routine()
+        local after_time = os.clock() + delay
+        repeat coroutine.yield(0) until os.clock() >= after_time
+        func(unpack(params))
+        return 1
+    end
+    startLuaCoroutine(self, 'after_routine')
 end
