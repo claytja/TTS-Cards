@@ -62,7 +62,7 @@ function onObjectEnterScriptingZone(Zone,Obj)
       if color == nil then
          return
       elseif color == Turn then --if player plays card, and it is their turn.
-         putCardInstant(Obj,WZone,{0,180,0})
+         putCardInstant(Obj,WZone)
       elseif color ~= Turn then --if player plays out of turn.
          local count = Obj.getQuantity()
          if count == -1 then count = 1 end
@@ -71,7 +71,14 @@ function onObjectEnterScriptingZone(Zone,Obj)
    end
 end
 
-function putCardInstant(obj,zone,rot) --checks if deck exsists and puts it ontop of deck, otherwise sets it to a constant y vale.
+--Tools
+function putCardInstant(obj,zone,flip) --checks if deck exsists and puts it ontop of deck, otherwise sets it to a constant y vale.
+    local rot
+    if flip == true then
+        rot = {0,0,0}
+    else
+        rot = {0,180,0}
+    end
    local pos = zone.getPosition()
    local deck = findDeck(zone)
    if deck then
@@ -82,7 +89,6 @@ function putCardInstant(obj,zone,rot) --checks if deck exsists and puts it ontop
    obj.setRotation(rot)
    obj.reload() --force player to drop card
 end
---Tools
 function findDeck(zone)
    if zone.getObjects() then
       for i, obj in ipairs(zone.getObjects()) do

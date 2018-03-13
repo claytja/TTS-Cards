@@ -5,7 +5,20 @@ function onSave()
    return JSON.encode(Sets)
 end
 BaceTable = {
-    {color="Black",Running=false},
+    {color="Settings",
+        Running=false,
+        Trot=false, --Trot = true == Counterclockwise
+        PluseStack=0,
+        CurrentColor=0,
+        CurrentNumber=0,
+        --Options
+        PluseForLimit=true, --If true may only play a +4 if its the last option
+        StackingPluse=false,--May stack +2 and +4 to keep going
+        StackingAll=false,  --May also stack skip and reverse
+        DrawTillGood=false, --If true Draw till you get a playable card
+        ForcePlay=false,    --Prevent players from drawing if thay have a playable card
+
+    },
     {color="White",hex="7F7F7F",UI="0dc414"},
     {color="Red",hex="DA1917",UI="ded49d"},
     {color="Yellow",hex="E6E42B",UI="dc3aff"},
@@ -37,6 +50,7 @@ function onload(save)
       end
    end
    --Vars
+   UNODeck = getObjectFromGUID("ce61e8")
    timerTick = 1
    display = {getObjectFromGUID("084f05"),getObjectFromGUID("c3da13")}
    RZone = getObjectFromGUID("11b50e")
@@ -46,15 +60,35 @@ function onload(save)
 end
 
 function Reset()
-   Running = false
+   Sets[1].Running = false
    self.clearButtons()
    self.createButton({
       label=self.getName(), click_function="start", function_owner=self,
       position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
    })
-   turn = Global.getVar("Turn")
+   Sets = BaceTable
 end
 --Main Code
+
+function start()
+    Sets[1].Running = true
+    for i,obj in ipairs(getAllObjects()) do
+        if obj.tag == "Card" or obj.tag == "Deck" then
+            obj.destruct()
+        end
+    end
+    self.clearButtons()
+    self.createButton({
+        label="Reset", click_function="SendReset", function_owner=self,
+        position={0,0.19,0}, rotation={0,0,0}, width=600, height=450, font_size=150
+    })
+    display[1].clearButtons()
+    display[2].clearButtons()
+    local pos = GZone.getPosition()
+    local rot = GZone.getRotation()
+    local deck = UNODeck.takeObject({position=pos,rotation={rot.x,rot.y,180}})
+    deck.shuffle()
+end
 
 function onObjectEnterScriptingZone(Zone,Obj)
 	if Zone == WZone and Sets[1].Running == true then
@@ -62,6 +96,53 @@ function onObjectEnterScriptingZone(Zone,Obj)
 		if color == nil then
 			return
         elseif color == Turn then
+            if Obj.tag == "Deck" then Obj.deal(Obj.getQuantity(),color) end --Can't play more then one card in UNO
+            local CardInfo = stringSplit(Obj.getDescription(), "%S+")
+            --10 = Reverse, 11 = Skip, 12 = +2, 20 = Wild, 21 = Wild +4
+
+            --Dealing with Stacking
+            if Sets[1].PluseStack > 0 then
+                if Sets[1].StackingPluse == true and (CardInfo[1] == 12 or CardInfo[1] == 21) then
+                    if CardInfo[1] == 12 then
+                        Sets[1].PluseStack = Sets[1].PluseStack +2
+                    else
+                        Sets[1].PluseStack = Sets[1].PluseStack +4
+                    end
+                    putCardInstant(Obj,WZone)
+                    NextPlayer()
+                elseif Sets[1].StackingAll == true and (CardInfo[1] == 11 or CardInfo[1] == 12 or CardInfo[1] == 20) then
+                    putCardInstant(Obj,WZone)
+                    NextPlayer()
+                else
+                    Obj.deal(1,color)
+                end
+                return
+            end
+
+            --If played card matches lastplayed card.
+            if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
+                local skip = false
+                if CardInfo[1] == 10 then --Reverse
+                    if Sets[1].Trot == true then
+                        Sets[1].Trot = false
+                    else
+                        Sets[1].Trot = true
+                    end
+                elseif CardInfo[1] == 11 then --skip
+                    skip = true
+                elseif CardInfo[1] == 12 then -- +2
+                    Sets[1].PluseStack = Sets[1].PluseStack +2
+                elseif CardInfo[1] == 20 then -- Wiled
+                    putCardInstant(Obj,WZone)
+                    return --Return to let them pick next color.
+                elseif CardInfo[1] == 21 then -- Wiled +4
+                    putCardInstant(Obj,WZone)
+                    Sets[1].PluseStack = Sets[1].PluseStack +4
+                    return --Return to let them pick next color.
+                end
+                putCardInstant(Obj,WZone)
+                NextPlayer(skip)
+            end
 
         else --if color ~= Turn
 			local count = Obj.getQuantity()
@@ -71,8 +152,79 @@ function onObjectEnterScriptingZone(Zone,Obj)
     end
 end
 
+function RGBYButtons() --Create buttons to pick color for wiled.
+
+end
+
+function ResetDeck() --Reset deck.
+
+end
+
+function NextPlayer(skip) --Handling changing players
+
+end
+
+function DDeckDeaw(tbl) DeckDeaw(o,tbl[1]) end
+function DeckDeaw(o,color) --DrawDiscard Button // Make fancy L8r
+    if color == Turn then
+        local Deck = findDeck(GZone)
+        local pos = WZone.getPosition()
+        local rot = WZone.getRotation()
+        --Check to see if the player has a card thay can play.
+        if Sets[1].ForcePlay == true then
+            if CheckHand(color) == true then
+                broadcastToColor("You have a card you can play.", color, stringColorToRGB("Red"))
+                return
+            end
+        end
+
+        if Sets[1].DrawTillGood == true then
+            for i,card in ipairs(Deck.getObjects()) do
+                local CardInfo = stringSplit(card.description, "%S+")
+                if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
+                    Deck.deal(i, color)
+                    return
+                end
+            end
+            --Cant find card in deck so Deal all card and reset deck and tryagen.
+            Deck.deal(Deck.getQuantity(), color)
+            ResetDeck()
+            delayedCallback("DDeckDeaw",{color},1)
+            return
+        else
+            Deck.deal(1, color)
+        end
+    end
+end
+
+function CheckHand(color)
+    for i,card in ipairs(Player[color].getHandObjects()) do
+        local CardInfo = stringSplit(card.getDescription(), "%S+")
+        if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
+            return true
+        end
+    end
+    return false
+end
 
 --Tools
+function putCardInstant(obj,zone,flip) --checks if deck exsists and puts it ontop of deck, otherwise sets it to a constant y vale.
+    local rot
+    if flip == true then
+        rot = {0,0,0}
+    else
+        rot = {0,180,0}
+    end
+   local pos = zone.getPosition()
+   local deck = findDeck(zone)
+   if deck then
+      obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+   else
+      obj.setPosition({pos.x,1.03,pos.z})
+   end
+   obj.setRotation(rot)
+   obj.reload() --force player to drop card
+end
 function findDeck(zone)
    if zone.getObjects() then
       for i, obj in ipairs(zone.getObjects()) do
