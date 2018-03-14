@@ -52,11 +52,7 @@ function onLoad(save)
     lockObjects()
 	UpdateDesplay()
 	Mods = {}
-   normaldeckbagguids = {"7882de"}
-   normaldeckbags = {}
-   for i,v in pairs(normaldeckbagguids) do
-      table.insert(normaldeckbags,getObjectFromGUID(v))
-   end
+   normaldeckbag = getObjectFromGUID("baghere")
    Rzone = getObjectFromGUID("11b50e")
    Wzone = getObjectFromGUID("d72560")
    Gzone = getObjectFromGUID("c28f42")

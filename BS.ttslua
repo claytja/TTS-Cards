@@ -334,14 +334,22 @@ end
 function getrandomdeck(info)
    local pos = info.pos
    local numb = info.numb
-   local normaldeckbags = Global.getTable("normaldeckbags")
-   local deck
-   for i=1,numb do
-      deck = normaldeckbags[math.random(1,#normaldeckbags)].takeObject({
-         position       = {pos.x,pos.y+i,pos.z},
-         rotation       = {0,0,180},
-         smooth         = false,
-      })
+   local normaldeckbag = Global.getTable("normaldeckbag")
+   local newobj = normaldeckbag.takeObject({
+      position       = {0,100,0},
+      smooth         = false,
+   })
+   waitFrames(5)
+   newobj.shuffle()
+   local deck = newobj.takeObject({
+      position       = pos,
+      rotation       = {0,0,180},
+      smooth         = false,
+   })
+   if numb > 1 then
+      for i=1,numb-1 do
+         deck.clone()
+      end
    end
    waitFrames(200)
    if deck ~= nil then

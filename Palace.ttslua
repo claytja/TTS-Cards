@@ -97,11 +97,12 @@ function Start2()
    end
    local pos = getObjectFromGUID("c28f42").getPosition()
    local rot = getObjectFromGUID("c28f42").getRotation()
-   getObjectFromGUID("7882de").takeObject({position=pos,rotation={rot.x,rot.y,180}})
    waitFrames(60)
    if #getSeatedPlayers() > 3 then
-      getObjectFromGUID("7882de").takeObject({position=pos,rotation={rot.x,rot.y,180}})
+      getrandomdeck({pos=pos,numb=2})
       waitFrames(180)
+   else
+      getrandomdeck({pos=pos,numb=1})
    end
    local deck = findDeck(GZone)
    deck.shuffle()
@@ -370,6 +371,46 @@ function CheckDiscard()
       end
    end
    lockout = false
+   return 1
+end
+
+function getrandomdeck(info)
+   local pos = info.pos
+   local numb = info.numb
+   local normaldeckbag = Global.getTable("normaldeckbag")
+   local newobj = normaldeckbag.takeObject({
+      position       = {0,100,0},
+      smooth         = false,
+   })
+   waitFrames(5)
+   newobj.shuffle()
+   local deck = newobj.takeObject({
+      position       = pos,
+      rotation       = {0,0,180},
+      smooth         = false,
+   })
+   if numb > 1 then
+      for i=1,numb-1 do
+         deck.clone()
+      end
+   end
+   waitFrames(200)
+   if deck ~= nil then
+      return deck
+   else
+      local cast = Physics.cast({
+         origin       = {pos.x,pos.y-3,pos.z},
+         direction    = {0,1,0},
+         type         = 2,
+         size = {2,2,2},
+         max_distance = 10,
+      }) -- returns {{Vector point, Vector normal, float distance, Object hit_object}, ...}
+      for i,v in pairs(cast) do
+         if v.hit_object.tag == "Deck" then
+            return v.hit_object
+         end
+      end
+   end
    return 1
 end
 
