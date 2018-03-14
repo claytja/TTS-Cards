@@ -158,25 +158,29 @@ function onObjectEnterScriptingZone(Zone,Obj,color)
 
             --Dealing with Stacking
             if Sets[1].PluseStack > 0 then
-                if Sets[1].StackingPluse == true and (CardInfo[1] == 12 or CardInfo[1] == 21) then
-                    Sets[1].CurrentColor = CardInfo[2]
-                    Sets[1].CurrentNumber = CardInfo[1]
-                    putCardInstant(Obj,WZone)
-                    if CardInfo[1] == 12 then
-                        Sets[1].PluseStack = Sets[1].PluseStack +2
-                        NextPlayer()
+                if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
+                    if Sets[1].StackingPluse == true and (CardInfo[1] == 12 or CardInfo[1] == 21) then
+                        Sets[1].CurrentColor = CardInfo[2]
+                        Sets[1].CurrentNumber = CardInfo[1]
+                        putCardInstant(Obj,WZone)
+                        if CardInfo[1] == 12 then
+                            Sets[1].PluseStack = Sets[1].PluseStack +2
+                            NextPlayer()
+                        else
+                            Sets[1].PluseStack = Sets[1].PluseStack +4
+                            RGBYButtons()
+                        end
+                    elseif Sets[1].StackingAll == true and (CardInfo[1] == 11 or CardInfo[1] == 12 or CardInfo[1] == 20) then
+                        Sets[1].CurrentColor = CardInfo[2]
+                        Sets[1].CurrentNumber = CardInfo[1]
+                        putCardInstant(Obj,WZone)
+                        if CardInfo[1] == 20 then
+                            RGBYButtons()
+                        else
+                            NextPlayer()
+                        end
                     else
-                        Sets[1].PluseStack = Sets[1].PluseStack +4
-                        RGBYButtons()
-                    end
-                elseif Sets[1].StackingAll == true and (CardInfo[1] == 11 or CardInfo[1] == 12 or CardInfo[1] == 20) then
-                    Sets[1].CurrentColor = CardInfo[2]
-                    Sets[1].CurrentNumber = CardInfo[1]
-                    putCardInstant(Obj,WZone)
-                    if CardInfo[1] == 20 then
-                        RGBYButtons()
-                    else
-                        NextPlayer()
+                        Obj.deal(1,color)
                     end
                 else
                     Obj.deal(1,color)
@@ -188,40 +192,32 @@ function onObjectEnterScriptingZone(Zone,Obj,color)
             if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
                 local skip = false
                 if CardInfo[1] == 10 then --Reverse
-                    broadcastToAll("Reverse", {1,1,1})
                     if Sets[1].Trot == true then
                         Sets[1].Trot = false
                     else
                         Sets[1].Trot = true
                     end
                 elseif CardInfo[1] == 11 then --skip
-                    broadcastToAll("skip", {1,1,1})
                     skip = true
                 elseif CardInfo[1] == 12 then -- +2
-                    broadcastToAll("+2", {1,1,1})
                     Sets[1].PluseStack = Sets[1].PluseStack +2
                 elseif CardInfo[1] == 20 then -- Wiled
-                    broadcastToAll("Wiled", {1,1,1})
                     SetLastCard(CardInfo)
                     putCardInstant(Obj,WZone)
                     RGBYButtons()
                     return --Return to let them pick next color.
                 elseif CardInfo[1] == 21 then -- Wiled +4
-                    broadcastToAll("Wiled+4", {1,1,1})
                     SetLastCard(CardInfo)
                     putCardInstant(Obj,WZone)
                     RGBYButtons()
                     Sets[1].PluseStack = Sets[1].PluseStack +4
                     return --Return to let them pick next color.
                 end
-                broadcastToAll(CardInfo[1], {1,1,1})
-                broadcastToAll(CardInfo[2], {1,1,1})
-                broadcastToAll("Not Specal Card", {1,1,1})
                 SetLastCard(CardInfo)
                 putCardInstant(Obj,WZone)
                 NextPlayer(skip)
             end
-
+            Obj.deal(1,color)
         else --if color ~= Turn
 			local count = Obj.getQuantity()
 			if count == -1 then count = 1 end
@@ -264,16 +260,23 @@ function ResetDeck(color,count) --Reset deck. then deal Count cards to color.
       deck.setRotation({0,0,180})
       deck.setPosition(GZone.getPosition())
       local newdeck = findDeck(GZone)
-      newdeck.deal(count,color)
+      if count then
+          newdeck.deal(count,color)
+      end
    else
       log("No deck found to reset", "error", "Error: ")
    end
 end
 
 function NextPlayer(skip) --Handling changing players // Make functions for all the buttons in here
+    for i,set in ipairs(Sets) do
+        if set.UI then
+            getObjectFromGUID(set.UI).clearButtons()
+        end
+    end
     Turn = Global.call("NextPlayer", {Sets[1].Trot})
     --If Limit +4 and No Stacking
-    if Sets[1].PluseForLimit == true and Sets[1].StackingPluse == false and Sets[1].CurrentNumber == 21 then
+    if Sets[1].PluseForLimit == true and Sets[1].StackingPluse == false and Sets[1].CurrentNumber == 21 and Sets[1].PluseStack > 0 then
         getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
             label="Contest", click_function="Contest", function_owner=self,
             position={1,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
@@ -283,7 +286,7 @@ function NextPlayer(skip) --Handling changing players // Make functions for all 
             position={-1,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
         })
     --If Limit +4 and with Stacking
-    elseif Sets[1].PluseForLimit == true and Sets[1].StackingPluse == true and Sets[1].CurrentNumber == 21 then
+    elseif Sets[1].PluseForLimit == true and Sets[1].StackingPluse == true and Sets[1].CurrentNumber == 21 and Sets[1].PluseStack > 0 then
         getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
             label="Contest", click_function="Contest", function_owner=self,
             position={1,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
@@ -293,12 +296,17 @@ function NextPlayer(skip) --Handling changing players // Make functions for all 
             position={-1,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
         })
     --No Limit on +4 and with stacking
-    elseif  Sets[1].PluseForLimit == false and Sets[1].StackingPluse == true and Sets[1].PluseStack > 0 then
+    elseif Sets[1].PluseForLimit == false and Sets[1].StackingPluse == true and Sets[1].PluseStack > 0 then
         getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
             label="Can't Stack", click_function="AcceptCards", function_owner=self,
             position={0,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
         })
     --Last card was a +2/+4 and no Limit on +4 and No Stacking
+    elseif Sets[1].PluseForLimit == true and Sets[1].StackingPluse == true and Sets[1].PluseStack > 0 then
+        getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
+            label="Can't Stack", click_function="AcceptCards", function_owner=self,
+            position={0,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
+        })
     elseif Sets[1].StackingPluse == false and Sets[1].PluseStack > 0 then
         local Deck = findDeck(WZone)
         --If not enuff
@@ -448,6 +456,7 @@ function PickRed(o,color)
     if color == Turn then
         Sets[1].CurrentColor = 2
         display[2].clearButtons()
+        broadcastToAll("Color is Red", stringColorToRGB("Red"))
         NextPlayer()
     end
 end
@@ -455,6 +464,7 @@ function PickGreen(o,color)
     if color == Turn then
         Sets[1].CurrentColor = 4
         display[2].clearButtons()
+        broadcastToAll("Color is Green", stringColorToRGB("Green"))
         NextPlayer()
     end
 end
@@ -464,6 +474,7 @@ function PickBlue(o,color)
     if color == Turn then
         Sets[1].CurrentColor = 1
         display[2].clearButtons()
+        broadcastToAll("Color is Blue", stringColorToRGB("Blue"))
         NextPlayer()
     end
 end
@@ -471,6 +482,7 @@ function PickYellow(o,color)
     if color == Turn then
         Sets[1].CurrentColor = 3
         display[2].clearButtons()
+        broadcastToAll("Color is Yellow", stringColorToRGB("Yellow"))
         NextPlayer()
     end
 end
@@ -489,6 +501,7 @@ function AcceptCards(o,color)
             end
         end
         getObjectFromGUID(findSetFromColor(Turn).UI).clearButtons()
+        NextPlayer()
     end
 end
 
@@ -503,8 +516,10 @@ function Contest(o,color)
             if CheckHand(Sets[1].LastPlayer,true) then
                 Deck.deal(Sets[1].PluseStack, Sets[1].LastPlayer)
             else
-               Deck.deal(Sets[1].PluseStack + 2, color)
+               Deck.deal((Sets[1].PluseStack + 2), color)
+               NextPlayer()
             end
+            Sets[1].PluseStack = 0
         end
         getObjectFromGUID(findSetFromColor(Turn).UI).clearButtons()
     end
