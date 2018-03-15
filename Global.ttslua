@@ -183,7 +183,9 @@ function Reset()
 	UpdateDesplay()
 	if #Mods > 0 then
 		for i,Obj in ipairs(Mods) do
-		Obj.call("Reset",{})
+            if Obj then
+                Obj.call("Reset",{})
+            end
 		end
 	end
 end

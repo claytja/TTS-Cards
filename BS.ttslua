@@ -48,10 +48,9 @@ function Reset()
    Running = false
    self.clearButtons()
    self.createButton({
-      label=gamename, click_function="start", function_owner=self,
+      label="BS", click_function="start", function_owner=self,
       position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
    })
-   turn = Global.getVar("Turn")
 end
 
 function SendReset()
@@ -247,18 +246,6 @@ function onObjectEnterScriptingZone(zone, obj)
          end
       end
    end
-end
-
-function onObjectEnterGreyZone(cards) --cards is a table
-
-end
-
-function onObjectEnterWhiteZone(cards) --cards is a table
-
-end
-
-function onObjectEnterRedZone(cards) --cards is a table
-
 end
 
 function displaycards2()

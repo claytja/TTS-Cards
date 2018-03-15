@@ -26,12 +26,12 @@ function onload(save)
                ForcePlay=false,    --Prevent players from drawing if thay have a playable card
 
            },
-           {color="White",hex="7F7F7F",UI="0dc414"},
-           {color="Red",hex="DA1917",UI="ded49d"},
-           {color="Yellow",hex="E6E42B",UI="dc3aff"},
-           {color="Green",hex="30B22A",UI="c42232"},
-           {color="Blue",hex="1E87FF",UI="a506f9"},
-           {color="Pink",hex="F46FCD",UI="423aeb"}
+           {color="White",hex="7F7F7F",UI="0dc414",Dots={"f73eb4","140320","f476b8","17f289","c9a1ab"}},
+           {color="Red",hex="DA1917",UI="ded49d",Dots={"21b5d2","a4df4c","1cffbc","e13ffd","de075e"}},
+           {color="Yellow",hex="E6E42B",UI="dc3aff",Dots={"ed19b2","2adab0","b29774","5dff41","327c73"}},
+           {color="Green",hex="30B22A",UI="c42232",Dots={"f4e4fc","7b997f","4c68cc","223061","42edd3"}},
+           {color="Blue",hex="1E87FF",UI="a506f9",Dots={"7bb674","8722e0","4ef0c4","257fd3","e08dc1"}},
+           {color="Pink",hex="F46FCD",UI="423aeb",Dots={"29677c","2612c0","7c63f0","e71bd6","c12205"}}
        }
       self.createButton({
          label=self.getName(), click_function="start", function_owner=self,
@@ -56,13 +56,13 @@ function onload(save)
               ForcePlay=false,    --Prevent players from drawing if thay have a playable card
 
           },
-          {color="White",hex="7F7F7F",UI="0dc414"},
-          {color="Red",hex="DA1917",UI="ded49d"},
-          {color="Yellow",hex="E6E42B",UI="dc3aff"},
-          {color="Green",hex="30B22A",UI="c42232"},
-          {color="Blue",hex="1E87FF",UI="a506f9"},
-          {color="Pink",hex="F46FCD",UI="423aeb"}
-      }
+          {color="White",hex="7F7F7F",UI="0dc414",Dots={"f73eb4","140320","f476b8","17f289","c9a1ab"}},
+          {color="Red",hex="DA1917",UI="ded49d",Dots={"21b5d2","a4df4c","1cffbc","e13ffd","de075e"}},
+          {color="Yellow",hex="E6E42B",UI="dc3aff",Dots={"ed19b2","2adab0","b29774","5dff41","327c73"}},
+          {color="Green",hex="30B22A",UI="c42232",Dots={"f4e4fc","7b997f","4c68cc","223061","42edd3"}},
+          {color="Blue",hex="1E87FF",UI="a506f9",Dots={"7bb674","8722e0","4ef0c4","257fd3","e08dc1"}},
+          {color="Pink",hex="F46FCD",UI="423aeb",Dots={"29677c","2612c0","7c63f0","e71bd6","c12205"}}
+        }
       if Sets[1].Running == false then
          self.createButton({
             label=self.getName(), click_function="start", function_owner=self,
@@ -92,6 +92,13 @@ function Reset()
       label=self.getName(), click_function="start", function_owner=self,
       position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
    })
+   for x, set in ipairs(Sets) do
+       if x ~= 1 then
+           for i, dot in ipairs(set.Dots) do
+               getObjectFromGUID(dot).setColorTint({0,0,0})
+           end
+       end
+   end
    Sets = {
        {color="Settings",
            Running=false,
@@ -110,12 +117,12 @@ function Reset()
            ForcePlay=false,    --Prevent players from drawing if thay have a playable card
 
        },
-       {color="White",hex="7F7F7F",UI="0dc414"},
-       {color="Red",hex="DA1917",UI="ded49d"},
-       {color="Yellow",hex="E6E42B",UI="dc3aff"},
-       {color="Green",hex="30B22A",UI="c42232"},
-       {color="Blue",hex="1E87FF",UI="a506f9"},
-       {color="Pink",hex="F46FCD",UI="423aeb"}
+       {color="White",hex="7F7F7F",UI="0dc414",Dots={"f73eb4","140320","f476b8","17f289","c9a1ab"}},
+       {color="Red",hex="DA1917",UI="ded49d",Dots={"21b5d2","a4df4c","1cffbc","e13ffd","de075e"}},
+       {color="Yellow",hex="E6E42B",UI="dc3aff",Dots={"ed19b2","2adab0","b29774","5dff41","327c73"}},
+       {color="Green",hex="30B22A",UI="c42232",Dots={"f4e4fc","7b997f","4c68cc","223061","42edd3"}},
+       {color="Blue",hex="1E87FF",UI="a506f9",Dots={"7bb674","8722e0","4ef0c4","257fd3","e08dc1"}},
+       {color="Pink",hex="F46FCD",UI="423aeb",Dots={"29677c","2612c0","7c63f0","e71bd6","c12205"}}
    }
 end
 --Main Code
@@ -219,6 +226,7 @@ function BegenGame() --Clear settings buttons, create draw button, shuffle the d
             })
         end
    end
+   startLuaCoroutine(self, "DotUI")
 end
 
 function onObjectEnterScriptingZone(Zone,Obj,color)
@@ -347,6 +355,7 @@ function ResetDeck(color,count) --Reset deck. then deal Count cards to color.
       })
       deck.setRotation({0,0,180})
       deck.setPosition(GZone.getPosition())
+      deck.shuffle()
       local newdeck = findDeck(GZone)
       if count then
           newdeck.deal(count,color)
@@ -412,9 +421,53 @@ function NextPlayer(skip) --Handling changing players // Make functions for all 
         end
     --If player was skiped
     elseif skip then
-        broadcastToAll(Player[Turn].steam_name .. ": Was Skiped.", stringColorToRGB(Turn))
+        broadcastToAll(Player[Turn].steam_name .. ": Was Skipped.", stringColorToRGB(Turn))
         NextPlayer()
     end
+end
+
+function DotUI()
+    local DotI = 1
+    local color = "White"
+    while Sets[1].Running == true do
+        for x, set in ipairs(Sets) do
+            if x ~= 1 then
+                for i, dot in ipairs(set.Dots) do
+                    getObjectFromGUID(dot).setColorTint({0,0,0})
+                end
+            end
+        end
+        if Sets[1].CurrentColor == 1 then
+            color = "Blue"
+        elseif Sets[1].CurrentColor == 2 then
+            color = "Red"
+        elseif Sets[1].CurrentColor == 3 then
+            color = "Yellow"
+        elseif Sets[1].CurrentColor == 4 then
+            color = "Green"
+        elseif Sets[1].CurrentColor == 5 then
+            color = "White"
+        end
+        local set = findSetFromColor(Turn)
+        for i,Dot in ipairs(set.Dots) do
+            if i ~= DotI then
+                getObjectFromGUID(Dot).setColorTint(stringColorToRGB(color))
+            end
+        end
+        if Sets[1].Trot == false then
+            DotI = DotI + 1
+        else
+            DotI = DotI - 1
+        end
+        if DotI <= 0 then
+            DotI = 5
+        end
+        if DotI >= 6 then
+            DotI = 1
+        end
+        waitFrames(10)
+    end
+    return 1
 end
 
 function SetLastCard(CardInfo) --Table {Card Number, Card Color}
@@ -583,13 +636,14 @@ function PickYellow(o,color)
     end
 end
 
+function AAcceptCards(tbl) AcceptCards(o,tbl[1]) end
 function AcceptCards(o,color)
     if color == Turn then
         if Sets[1].PluseStack > 0 then
             local Deck = findDeck(GZone)
             if Deck.tag == "Card" or Deck.getQuantity() < Sets[1].PluseStack then
                 ResetDeck()
-                AcceptCards(o,color)
+                delayedCallback("AAcceptCards",{color},0.1)
                 return
             else
                 Deck.deal(Sets[1].PluseStack, color)
@@ -607,7 +661,7 @@ function Contest(o,color)
         local Deck = findDeck(GZone)
         if Deck.tag == "Card" or Deck.getQuantity() < (Sets[1].PluseStack +2) then
             ResetDeck()
-            delayedCallback("Contest",{color},0.1)
+            delayedCallback("CContest",{color},0.1)
             return
         else
             if CheckHand(Sets[1].LastPlayer,true) == true then

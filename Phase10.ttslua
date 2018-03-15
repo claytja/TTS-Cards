@@ -160,7 +160,6 @@ function Reset()
     }
     setNotes("")
     roundOne = true
-	Turn = Global.getVar("Turn")
 end
 
 function findDeck1()

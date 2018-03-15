@@ -60,7 +60,6 @@ function Reset()
       label="Palace", click_function="Start", function_owner=self,
       position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
    })
-   Turn = Global.getVar("Turn")
    lockout = false
    lockout2 = false
 end
