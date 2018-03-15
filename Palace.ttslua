@@ -95,14 +95,10 @@ function Start2()
          position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
       })
    end
-   local pos = getObjectFromGUID("c28f42").getPosition()
-   local rot = getObjectFromGUID("c28f42").getRotation()
-   waitFrames(60)
    if #getSeatedPlayers() > 3 then
-      getrandomdeck({pos=pos,numb=2})
-      waitFrames(180)
+      getrandomdeck({zone=GZone,numb=2})
    else
-      getrandomdeck({pos=pos,numb=1})
+      getrandomdeck({zone=GZone,numb=1})
    end
    local deck = findDeck(GZone)
    deck.shuffle()
@@ -375,42 +371,23 @@ function CheckDiscard()
 end
 
 function getrandomdeck(info)
-   local pos = info.pos
-   local numb = info.numb
-   local normaldeckbag = Global.getTable("normaldeckbag")
-   local newobj = normaldeckbag.takeObject({
-      position       = {0,100,0},
-      smooth         = false,
-   })
-   waitFrames(5)
+   local numb = info.numb or 1
+   local normaldeckbag = getObjectFromGUID(Global.getVar("normaldeckbag"))
+   local newobj = normaldeckbag.takeObject({})
    newobj.shuffle()
    local deck = newobj.takeObject({
       position       = pos,
       rotation       = {0,0,180},
       smooth         = false,
    })
-   if numb > 1 then
-      for i=1,numb-1 do
-         deck.clone()
-      end
-   end
-   waitFrames(200)
-   if deck ~= nil then
-      return deck
-   else
-      local cast = Physics.cast({
-         origin       = {pos.x,pos.y-3,pos.z},
-         direction    = {0,1,0},
-         type         = 2,
-         size = {2,2,2},
-         max_distance = 10,
-      }) -- returns {{Vector point, Vector normal, float distance, Object hit_object}, ...}
-      for i,v in pairs(cast) do
-         if v.hit_object.tag == "Deck" then
-            return v.hit_object
-         end
-      end
-   end
+  for i=1,numb do
+     local nDeck = deck.clone({})
+     putCardInstant(nDeck,info.zone,true)
+     waitFrames(5)
+  end
+  deck.destruct()
+  newobj.destruct()
+  waitFrames(30)
    return 1
 end
 
@@ -460,4 +437,21 @@ function delayedCallback(func, table, time)
    params.id = 'Palace_' ..timerTick
    Timer.create({identifier=params.id, function_name=func, parameters=params, delay=time})
    timerTick = timerTick + 1
+end
+function putCardInstant(obj,zone,flip) --checks if deck exsists and puts it ontop of deck, otherwise sets it to a constant y vale.
+    local rot
+    if flip == true then
+        rot = {0,0,180}
+    else
+        rot = {0,0,0}
+    end
+   local pos = zone.getPosition()
+   local deck = findDeck(zone)
+   if deck then
+      obj.setPosition({pos.x,deck.getBounds().size.y+deck.getPosition().y,pos.z})
+   else
+      obj.setPosition({pos.x,1.03,pos.z})
+   end
+   obj.setRotation(rot)
+   obj.reload() --force player to drop card
 end

@@ -52,7 +52,7 @@ function onLoad(save)
     lockObjects()
 	UpdateDesplay()
 	Mods = {}
-   normaldeckbag = getObjectFromGUID("baghere")
+   normaldeckbag = "7882de"
    Rzone = getObjectFromGUID("11b50e")
    Wzone = getObjectFromGUID("d72560")
    Gzone = getObjectFromGUID("c28f42")
