@@ -4,42 +4,65 @@ end
 function onSave()
    return JSON.encode(Sets)
 end
-BaceTable = {
-    {color="Settings",
-        Running=false,
-        Trot=false, --Trot = true == Counterclockwise
-        PluseStack=0, --Current Stack of Pluse 2/4
-        CurrentColor=0, --Color ID of Card to play on.
-        CurrentNumber=0, --Number ID of Card to play on.
-        LastColor=0, --Color ID of Card b4 Current / Used for chalanging Wiled+4
-        LastNumber=0,--Number ID of Card b4 Current / Used for chalanging Wiled+4
-        LastPlayer="White", --Last Player / Used for chalanging Wiled+4
-        --Options
-        PluseForLimit=true, --If true may only play a +4 if its the last option
-        StackingPluse=false,--May stack +2 and +4 to keep going
-        StackingAll=false,  --May also stack skip and reverse
-        DrawTillGood=false, --If true Draw till you get a playable card
-        ForcePlay=false,    --Prevent players from drawing if thay have a playable card
-
-    },
-    {color="White",hex="7F7F7F",UI="0dc414"},
-    {color="Red",hex="DA1917",UI="ded49d"},
-    {color="Yellow",hex="E6E42B",UI="dc3aff"},
-    {color="Green",hex="30B22A",UI="c42232"},
-    {color="Blue",hex="1E87FF",UI="a506f9"},
-    {color="Pink",hex="F46FCD",UI="423aeb"}
-}
 function onload(save)
     --Setup
    Global.call("RegisterMod",{self.guid})
    if save ~= "" then
-       Sets = BaceTable
+       Sets = {
+           {color="Settings",
+               Running=false,
+               Trot=false, --Trot = true == Counterclockwise
+               PluseStack=0, --Current Stack of Pluse 2/4
+               CurrentColor=0, --Color ID of Card to play on.
+               CurrentNumber=0, --Number ID of Card to play on.
+               LastColor=0, --Color ID of Card b4 Current / Used for chalanging Wiled+4
+               LastNumber=0,--Number ID of Card b4 Current / Used for chalanging Wiled+4
+               LastPlayer="White", --Last Player / Used for chalanging Wiled+4
+               --Options
+               PluseForLimit=true, --If true may only play a +4 if its the last option
+               StackingPluse=false,--May stack +2 and +4 to keep going
+               StackingAll=false,  --May also stack skip and reverse
+               DrawTillGood=false, --If true Draw till you get a playable card
+               ForcePlay=false,    --Prevent players from drawing if thay have a playable card
+
+           },
+           {color="White",hex="7F7F7F",UI="0dc414"},
+           {color="Red",hex="DA1917",UI="ded49d"},
+           {color="Yellow",hex="E6E42B",UI="dc3aff"},
+           {color="Green",hex="30B22A",UI="c42232"},
+           {color="Blue",hex="1E87FF",UI="a506f9"},
+           {color="Pink",hex="F46FCD",UI="423aeb"}
+       }
       self.createButton({
          label=self.getName(), click_function="start", function_owner=self,
          position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
       })
    else
-      Sets = JSON.decode(save) or BaceTable
+      Sets = JSON.decode(save) or {
+          {color="Settings",
+              Running=false,
+              Trot=false, --Trot = true == Counterclockwise
+              PluseStack=0, --Current Stack of Pluse 2/4
+              CurrentColor=0, --Color ID of Card to play on.
+              CurrentNumber=0, --Number ID of Card to play on.
+              LastColor=0, --Color ID of Card b4 Current / Used for chalanging Wiled+4
+              LastNumber=0,--Number ID of Card b4 Current / Used for chalanging Wiled+4
+              LastPlayer="White", --Last Player / Used for chalanging Wiled+4
+              --Options
+              PluseForLimit=true, --If true may only play a +4 if its the last option
+              StackingPluse=false,--May stack +2 and +4 to keep going
+              StackingAll=false,  --May also stack skip and reverse
+              DrawTillGood=false, --If true Draw till you get a playable card
+              ForcePlay=false,    --Prevent players from drawing if thay have a playable card
+
+          },
+          {color="White",hex="7F7F7F",UI="0dc414"},
+          {color="Red",hex="DA1917",UI="ded49d"},
+          {color="Yellow",hex="E6E42B",UI="dc3aff"},
+          {color="Green",hex="30B22A",UI="c42232"},
+          {color="Blue",hex="1E87FF",UI="a506f9"},
+          {color="Pink",hex="F46FCD",UI="423aeb"}
+      }
       if Sets[1].Running == false then
          self.createButton({
             label=self.getName(), click_function="start", function_owner=self,
@@ -69,7 +92,31 @@ function Reset()
       label=self.getName(), click_function="start", function_owner=self,
       position={0,0.19,0}, rotation={0,0,0}, width=1200, height=450, font_size=300
    })
-   Sets = BaceTable
+   Sets = {
+       {color="Settings",
+           Running=false,
+           Trot=false, --Trot = true == Counterclockwise
+           PluseStack=0, --Current Stack of Pluse 2/4
+           CurrentColor=0, --Color ID of Card to play on.
+           CurrentNumber=0, --Number ID of Card to play on.
+           LastColor=0, --Color ID of Card b4 Current / Used for chalanging Wiled+4
+           LastNumber=0,--Number ID of Card b4 Current / Used for chalanging Wiled+4
+           LastPlayer="White", --Last Player / Used for chalanging Wiled+4
+           --Options
+           PluseForLimit=true, --If true may only play a +4 if its the last option
+           StackingPluse=false,--May stack +2 and +4 to keep going
+           StackingAll=false,  --May also stack skip and reverse
+           DrawTillGood=false, --If true Draw till you get a playable card
+           ForcePlay=false,    --Prevent players from drawing if thay have a playable card
+
+       },
+       {color="White",hex="7F7F7F",UI="0dc414"},
+       {color="Red",hex="DA1917",UI="ded49d"},
+       {color="Yellow",hex="E6E42B",UI="dc3aff"},
+       {color="Green",hex="30B22A",UI="c42232"},
+       {color="Blue",hex="1E87FF",UI="a506f9"},
+       {color="Pink",hex="F46FCD",UI="423aeb"}
+   }
 end
 --Main Code
 
@@ -132,14 +179,46 @@ function BegenGame() --Clear settings buttons, create draw button, shuffle the d
    for i,v in pairs(getSeatedPlayers()) do
       deck.deal(7,v)
    end
-   local card = deck.takeObject({})
-   putCardInstant(card,WZone)
-   local CardInfo = stringSplit(card.getDescription(), "%S+")
+   PickRandomPlayer()
+   local Q
+   for i, card in ipairs(reverseTable(deck.getObjects())) do
+       local CardInfo = stringSplit(card.description, "%S+")
+       CardInfo[1] = tonumber(CardInfo[1])
+       if CardInfo[1] ~= 21 then
+           Q = i
+           break
+       end
+   end
+   local FirstCard = deck.takeObject({index=Q})
+   putCardInstant(FirstCard,WZone)
+   local CardInfo = stringSplit(FirstCard.getDescription(), "%S+")
    CardInfo[1] = tonumber(CardInfo[1])
    CardInfo[2] = tonumber(CardInfo[2])
    Sets[1].CurrentColor = CardInfo[2]
    Sets[1].CurrentNumber= CardInfo[1]
-   PickRandomPlayer()
+   if CardInfo[1] == 10 then
+       if Sets[1].Trot == true then
+           Sets[1].Trot = false
+       else
+           Sets[1].Trot = true
+       end
+       if #getSeatedPlayers() == 2 then
+           NextPlayer()
+       end
+    elseif CardInfo[1] == 11 then
+        NextPlayer()
+    elseif CardInfo[1] == 12 then
+        if Sets[1].StackingPluse == false then
+            deck.deal(2, Turn)
+            NextPlayer()
+        else
+            Sets[1].PluseStack = 2
+            getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
+                label="Can't Stack", click_function="AcceptCards", function_owner=self,
+                position={0,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
+            })
+        end
+   end
 end
 
 function onObjectEnterScriptingZone(Zone,Obj,color)
@@ -159,9 +238,8 @@ function onObjectEnterScriptingZone(Zone,Obj,color)
             --Dealing with Stacking
             if Sets[1].PluseStack > 0 then
                 if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
+                    SetLastCard(CardInfo)
                     if Sets[1].StackingPluse == true and (CardInfo[1] == 12 or CardInfo[1] == 21) then
-                        Sets[1].CurrentColor = CardInfo[2]
-                        Sets[1].CurrentNumber = CardInfo[1]
                         putCardInstant(Obj,WZone)
                         if CardInfo[1] == 12 then
                             Sets[1].PluseStack = Sets[1].PluseStack +2
@@ -170,12 +248,21 @@ function onObjectEnterScriptingZone(Zone,Obj,color)
                             Sets[1].PluseStack = Sets[1].PluseStack +4
                             RGBYButtons()
                         end
-                    elseif Sets[1].StackingAll == true and (CardInfo[1] == 11 or CardInfo[1] == 12 or CardInfo[1] == 20) then
-                        Sets[1].CurrentColor = CardInfo[2]
-                        Sets[1].CurrentNumber = CardInfo[1]
+                    elseif Sets[1].StackingAll == true and (CardInfo[1] == 10 or CardInfo[1] == 11 or CardInfo[1] == 12 or CardInfo[1] == 20) then
                         putCardInstant(Obj,WZone)
                         if CardInfo[1] == 20 then
                             RGBYButtons()
+                        elseif #getSeatedPlayers() == 2 and CardInfo[1] == 10 then
+                            NextPlayer(true)
+                        elseif CardInfo[1] == 10 then
+                            if Sets[1].Trot == true then
+                                Sets[1].Trot = false
+                            else
+                                Sets[1].Trot = true
+                            end
+                            NextPlayer()
+                        elseif CardInfo[1] == 11 then
+                            NextPlayer(true)
                         else
                             NextPlayer()
                         end
@@ -189,7 +276,8 @@ function onObjectEnterScriptingZone(Zone,Obj,color)
             end
 
             --If played card matches lastplayed card.
-            if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 then
+            if CardInfo[1] == Sets[1].CurrentNumber or CardInfo[2] == Sets[1].CurrentColor or CardInfo[2] == 5 or Sets[1].CurrentColor == 5 then
+                SetLastCard(CardInfo)
                 local skip = false
                 if CardInfo[1] == 10 then --Reverse
                     if Sets[1].Trot == true then
@@ -197,23 +285,23 @@ function onObjectEnterScriptingZone(Zone,Obj,color)
                     else
                         Sets[1].Trot = true
                     end
+                    if #getSeatedPlayers() == 2 then
+                        skip = true
+                    end
                 elseif CardInfo[1] == 11 then --skip
                     skip = true
                 elseif CardInfo[1] == 12 then -- +2
                     Sets[1].PluseStack = Sets[1].PluseStack +2
                 elseif CardInfo[1] == 20 then -- Wiled
-                    SetLastCard(CardInfo)
                     putCardInstant(Obj,WZone)
                     RGBYButtons()
                     return --Return to let them pick next color.
                 elseif CardInfo[1] == 21 then -- Wiled +4
-                    SetLastCard(CardInfo)
                     putCardInstant(Obj,WZone)
                     RGBYButtons()
                     Sets[1].PluseStack = Sets[1].PluseStack +4
                     return --Return to let them pick next color.
                 end
-                SetLastCard(CardInfo)
                 putCardInstant(Obj,WZone)
                 NextPlayer(skip)
             end
@@ -274,6 +362,7 @@ function NextPlayer(skip) --Handling changing players // Make functions for all 
             getObjectFromGUID(set.UI).clearButtons()
         end
     end
+    Sets[1].LastPlayer = Turn
     Turn = Global.call("NextPlayer", {Sets[1].Trot})
     --If Limit +4 and No Stacking
     if Sets[1].PluseForLimit == true and Sets[1].StackingPluse == false and Sets[1].CurrentNumber == 21 and Sets[1].PluseStack > 0 then
@@ -297,12 +386,14 @@ function NextPlayer(skip) --Handling changing players // Make functions for all 
         })
     --No Limit on +4 and with stacking
     elseif Sets[1].PluseForLimit == false and Sets[1].StackingPluse == true and Sets[1].PluseStack > 0 then
+        if skip then NextPlayer() return end
         getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
             label="Can't Stack", click_function="AcceptCards", function_owner=self,
             position={0,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
         })
     --Last card was a +2/+4 and no Limit on +4 and No Stacking
     elseif Sets[1].PluseForLimit == true and Sets[1].StackingPluse == true and Sets[1].PluseStack > 0 then
+        if skip then NextPlayer() return end
         getObjectFromGUID(findSetFromColor(Turn).UI).createButton({
             label="Can't Stack", click_function="AcceptCards", function_owner=self,
             position={0,0.19,0}, rotation={0,0,0}, width=1000, height=300, font_size=200
@@ -337,6 +428,9 @@ function DDeckDeaw(tbl) DeckDeaw(o,tbl[1]) end
 function DeckDeaw(o,color) --DrawDiscard Button // Make fancy L8r (Make it play the working card)
     if color == Turn then
         local Deck = findDeck(GZone)
+        if Deck == false or Deck.tag == "Card" then
+            ResetDeck()
+        end
         local pos = WZone.getPosition()
         local rot = WZone.getRotation()
         --Check to see if the player has a card thay can play.
@@ -345,6 +439,9 @@ function DeckDeaw(o,color) --DrawDiscard Button // Make fancy L8r (Make it play 
                 broadcastToColor("You have a card you can play.", color, stringColorToRGB("Red"))
                 return
             end
+        end
+        if Sets[1].PluseStack > 0 then
+            return
         end
 
         if Sets[1].DrawTillGood == true then
@@ -389,6 +486,8 @@ end
 function CheckHand(color,Last) --If Last == true then Compare with Last insted of Current
     for i,card in ipairs(Player[color].getHandObjects()) do
         local CardInfo = stringSplit(card.getDescription(), "%S+")
+        CardInfo[1] = tonumber(CardInfo[1])
+        CardInfo[2] = tonumber(CardInfo[2])
         if Last then
             if CardInfo[1] == Sets[1].LastNumber or CardInfo[2] == Sets[1].LastColor or CardInfo[2] == 5 then
                 return true
@@ -406,7 +505,6 @@ end
 --Button functions
 
 function ToggleChallengeMode(o,c)
-    print(Sets[1].PluseForLimit)
     if Sets[1].PluseForLimit == true then
         Sets[1].PluseForLimit = false
         display[2].editButton({index=3,label="Challenge +4: Off",tooltip="Players can play Wild +4 cards whenever."})
@@ -469,8 +567,6 @@ function PickGreen(o,color)
     end
 end
 function PickBlue(o,color)
-    print(color)
-    print(Turn)
     if color == Turn then
         Sets[1].CurrentColor = 1
         display[2].clearButtons()
@@ -505,15 +601,16 @@ function AcceptCards(o,color)
     end
 end
 
+function CContest(tbl) Contest(o,tbl[1]) end
 function Contest(o,color)
     if color == Turn then
         local Deck = findDeck(GZone)
         if Deck.tag == "Card" or Deck.getQuantity() < (Sets[1].PluseStack +2) then
             ResetDeck()
-            Contest(o,color)
+            delayedCallback("Contest",{color},0.1)
             return
         else
-            if CheckHand(Sets[1].LastPlayer,true) then
+            if CheckHand(Sets[1].LastPlayer,true) == true then
                 Deck.deal(Sets[1].PluseStack, Sets[1].LastPlayer)
             else
                Deck.deal((Sets[1].PluseStack + 2), color)
